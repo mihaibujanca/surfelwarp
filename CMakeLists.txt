@@ -78,6 +78,7 @@ set(CMAKE_DEBUG_POSTFIX d)
 # Do not use the system Eigen
 set(EIGEN_ROOT "${CMAKE_SOURCE_DIR}/external/eigen3.4")
 set(EIGEN_INCLUDE_DIR ${EIGEN_ROOT})
+include_directories(${EIGEN_INCLUDE_DIR})
 
 # The cub package
 set(CUB_DIR "${CMAKE_SOURCE_DIR}/external/cub-1.8.0")

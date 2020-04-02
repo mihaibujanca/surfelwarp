@@ -58,3 +58,6 @@ cmake-build*
 
 # the result directory
 *results/*
+
+# gpc model
+sintel_small_speed
