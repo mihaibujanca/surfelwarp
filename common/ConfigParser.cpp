@@ -19,6 +19,7 @@ void surfelwarp::ConfigParser::setDefaultParameters() {
 	setDefaultClipValue();
 	setDefaultCameraIntrinsic();
 	setDefaultPenaltyConfigs();
+	setDefaultIOMode();
 }
 
 /* Public interface
@@ -40,6 +41,7 @@ void surfelwarp::ConfigParser::ParseConfig(const std::string & config_path) {
 	loadClipValueFromJson((const void*)&config_json);
 	loadCameraIntrinsicFromJson((const void*)&config_json);
 	loadPenaltyConfigFromJson((const void*)&config_json);
+	loadIOModeFromJson((const void*)&config_json);
 }
 
 void surfelwarp::ConfigParser::SaveConfig(const std::string & config_path) const {
@@ -55,6 +57,7 @@ void surfelwarp::ConfigParser::SaveConfig(const std::string & config_path) const
 	saveClipValueToJson((void*)&config_json);
 	saveCameraIntrinsicToJson((void*)&config_json);
 	savePenaltyConfigToJson((void*)&config_json);
+	saveIOModeToJson((void*)&config_json);
 
 	//Save it to file
 	std::ofstream file_output(config_path);
@@ -395,4 +398,32 @@ bool surfelwarp::ConfigParser::use_offline_foreground_segmneter() const {
 
 bool surfelwarp::ConfigParser::use_density_term() const {
 	return m_use_density_term;
+}
+
+void surfelwarp::ConfigParser::setDefaultIOMode() {
+	m_io_mode = "local_file";
+}
+
+std::string surfelwarp::ConfigParser::getIOMode() const {
+	return m_io_mode;
+}
+
+void surfelwarp::ConfigParser::loadIOModeFromJson(const void* json_ptr) {
+	//Recovery the json type
+	using json = nlohmann::json;
+	const auto& config_json = *((const json*)json_ptr);
+
+	
+	//SURFELWARP_CHECK(config_json.find("io_mode") != config_json.end());
+	if(config_json.find("io_mode") != config_json.end()){
+		m_io_mode = config_json["io_mode"];
+	}
+}
+
+void surfelwarp::ConfigParser::saveIOModeToJson(void* json_ptr) const {
+	//Recovery the json type
+	using json = nlohmann::json;
+	auto& config_json = *((json*)json_ptr);
+
+	config_json["io_mode"] = m_io_mode;
 }

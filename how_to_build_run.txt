@@ -6,4 +6,4 @@ make -j8
 
 cd ./apps/surfelwarp_app && ./surfelwarp_app ../../../test_data/boxing_config.json
 
-#./apps/surfelwarp_app/surfelwarp_app ../test_data/boxing_config.json
+xs ./apps/surfelwarp_app && ./surfelwarp_app ../../../test_data/kinectdk_config.json

@@ -81,6 +81,7 @@ namespace surfelwarp {
 		void FetchRGBPrevFrame(size_t curr_frame_idx);
         const cv::Mat& RawDepthImageCPU() const { return m_depth_img; }
         const cv::Mat& RawRGBImageCPU() const { return m_rgb_img; }
+		const cv::Mat& RawRGBImagePrevCPU() const { return m_rgb_img_prev; }
 
 
 

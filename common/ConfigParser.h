@@ -119,6 +119,21 @@ namespace surfelwarp {
 		bool use_offline_foreground_segmneter() const;
 		bool use_density_term() const;
 		
+
+		// add `io_mode` for kinectdk,
+		// default: io_mode = "local_file", surfelwarp_app will run on this io_mode, 
+		//          where imiages are read from local file
+		// for kinectdk: io_mode = "kinect_dk", surfelwarp_kinectdk will run on this io_mode, 
+		//               where images are captured from kinect dk at runing-time;
+	private:
+		std::string m_io_mode;
+		void setDefaultIOMode();
+		void loadIOModeFromJson(const void* json_ptr);
+		void saveIOModeToJson(void* json_ptr) const;
+	public:
+		std::string getIOMode() const;
+
+
 		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	};
 

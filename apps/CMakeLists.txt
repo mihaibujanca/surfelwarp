@@ -1,1 +1,2 @@
 add_subdirectory(surfelwarp_app)
+add_subdirectory(surfelwarp_kinectdk)

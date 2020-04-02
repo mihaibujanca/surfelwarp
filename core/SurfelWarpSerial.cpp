@@ -10,6 +10,7 @@
 #include "visualization/Visualizer.h"
 #include "imgproc/frameio/FetchInterface.h"
 #include "imgproc/frameio/GenericFileFetch.h"
+#include "imgproc/frameio/AzureKinectDKFetch.h"
 
 #include <thread>
 #include <fstream>
@@ -19,7 +20,16 @@ surfelwarp::SurfelWarpSerial::SurfelWarpSerial() {
 	const auto& config = ConfigParser::Instance();
 	
 	//Construct the image processor
-	FetchInterface::Ptr fetcher = std::make_shared<GenericFileFetch>(config.data_path());
+	FetchInterface::Ptr fetcher;
+	// default if local_file mode
+	if(config.getIOMode()== "local_file") {
+		fetcher = std::make_shared<GenericFileFetch>(config.data_path());
+	}else if (config.getIOMode() == "kinect_dk"){
+		fetcher = std::make_shared<AzureKinectDKFetch>();
+	}else{
+		// any other io_mode?
+	}
+
 	m_image_processor = std::make_shared<ImageProcessor>(fetcher);
 	
 	//Construct the holder for surfel geometry

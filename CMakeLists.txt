@@ -31,6 +31,8 @@ endif()
 # GLFW package
 find_package(glfw3 REQUIRED)
 
+# k4a package: for Azure Kinect DK
+find_package(k4a)
 
 # The library and compiler flags on Windows
 if(MSVC)

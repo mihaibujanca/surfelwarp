@@ -17,7 +17,7 @@ void surfelwarp::Visualizer::DrawDepthImage(const cv::Mat & depth_img)
 	cv::Mat depth_scale;
 	cv::convertScaleAbs(depth_img, depth_scale, 255 / max_depth);
 	cv::imshow("depth image", depth_scale);
-	cv::waitKey(0);
+	//cv::waitKey(0);
 }
 
 void surfelwarp::Visualizer::SaveDepthImage(const cv::Mat &depth_img, const std::string &path) {
