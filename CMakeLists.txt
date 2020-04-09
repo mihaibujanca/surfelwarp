@@ -2,6 +2,13 @@ cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
 
 project(surfelwarp)
 
+# configuration types
+set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRINGS "Configs" FORCE)
+if(DEFINED CMAKE_BUILD_TYPE)
+    SET_PROPERTY(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS ${CMAKE_CONFIGURATION_TYPES})
+ENDIF()
+
+
 # Add cmake module path
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
@@ -69,9 +76,16 @@ if(MSVC)
 endif(MSVC)
 # The library and compiler flags on Ubuntu
 if(UNIX)
-    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
-    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -g -G")
+    if(CMAKE_BUILD_TYPE STREQUAL "Release")
+        message("release type")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall")
+        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}")
+    else()
+        message("debug type")
+        #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -g -G")
+    endif()
 endif(UNIX)
 
 # Append "d" to library versions with debugging symbols

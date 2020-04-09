@@ -1,6 +1,10 @@
 mkdir build && cd build
 
+#
 cmake -DCUDA_ARCH=61 -DVISUALIZATION_LIBRARY=cilantro -Dcilantro_DIR=../../cilantro/install_static/lib/cmake/cilantro -DPangolin_DIR=../../Pangolin/install_static/lib/cmake/Pangolin  ..
+
+# release
+cmake -DCUDA_ARCH=61 -DVISUALIZATION_LIBRARY=cilantro -Dcilantro_DIR=../../cilantro/install_static/lib/cmake/cilantro -DPangolin_DIR=../../Pangolin/install_static/lib/cmake/Pangolin -DCMAKE_BUILD_TYPE=Release ..
 
 make -j8
 
