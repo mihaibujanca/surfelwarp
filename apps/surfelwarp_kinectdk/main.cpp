@@ -7,7 +7,7 @@
 #include "core/SurfelWarpSerial.h"
 #include <boost/filesystem.hpp>
 
-
+#define WAIT_TIME 5
 
 int main(int argc, char** argv) {
 	using namespace surfelwarp;
@@ -37,6 +37,10 @@ int main(int argc, char** argv) {
 	for(auto i = config.start_frame_idx(); i < config.num_frames(); i++){
 		LOG(INFO) << "The " << i << "th Frame";
 		fusion.ProcessNextFrameWithReinit(offline_rendering);
+		if (cv::waitKey(WAIT_TIME) == 27 || cv::waitKey(WAIT_TIME) == 'q')
+        {
+            break;
+        }
 	}
 	
 	//destroyCudaContext(context);

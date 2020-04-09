@@ -127,11 +127,14 @@ namespace surfelwarp {
 		//               where images are captured from kinect dk at runing-time;
 	private:
 		std::string m_io_mode;
+		bool m_save_online_frame;
 		void setDefaultIOMode();
 		void loadIOModeFromJson(const void* json_ptr);
+		void loadSaveOnlineFrame(const void* json_ptr);
 		void saveIOModeToJson(void* json_ptr) const;
 	public:
 		std::string getIOMode() const;
+		bool isSaveOnlineFrame() const;
 
 
 		EIGEN_MAKE_ALIGNED_OPERATOR_NEW

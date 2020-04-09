@@ -21,7 +21,7 @@ int main(int argc, char** argv){
 
     Visualizer::Ptr visualizer = std::make_shared<Visualizer>();
 
-    FetchInterface::Ptr image_fetcher = std::make_shared<AzureKinectDKFetch>();
+    FetchInterface::Ptr image_fetcher = std::make_shared<AzureKinectDKFetch>(config.data_path(), config.isSaveOnlineFrame());
     ImageProcessor::Ptr image_processor = std::make_shared<ImageProcessor>(image_fetcher);
 
 

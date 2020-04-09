@@ -42,6 +42,7 @@ void surfelwarp::ConfigParser::ParseConfig(const std::string & config_path) {
 	loadCameraIntrinsicFromJson((const void*)&config_json);
 	loadPenaltyConfigFromJson((const void*)&config_json);
 	loadIOModeFromJson((const void*)&config_json);
+	loadSaveOnlineFrame((const void*)&config_json);
 }
 
 void surfelwarp::ConfigParser::SaveConfig(const std::string & config_path) const {
@@ -426,4 +427,18 @@ void surfelwarp::ConfigParser::saveIOModeToJson(void* json_ptr) const {
 	auto& config_json = *((json*)json_ptr);
 
 	config_json["io_mode"] = m_io_mode;
+}
+
+void surfelwarp::ConfigParser::loadSaveOnlineFrame(const void* json_ptr){
+	//Recovery the json type
+	using json = nlohmann::json;
+	const auto& config_json = *((const json*)json_ptr);
+	
+	if(config_json.find("save_online_frame") != config_json.end()){
+		m_save_online_frame = config_json["save_online_frame"];
+	}
+}
+
+bool surfelwarp::ConfigParser::isSaveOnlineFrame() const{
+	return m_save_online_frame;
 }

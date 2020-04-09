@@ -25,7 +25,7 @@ surfelwarp::SurfelWarpSerial::SurfelWarpSerial() {
 	if(config.getIOMode()== "local_file") {
 		fetcher = std::make_shared<GenericFileFetch>(config.data_path());
 	}else if (config.getIOMode() == "kinect_dk"){
-		fetcher = std::make_shared<AzureKinectDKFetch>();
+		fetcher = std::make_shared<AzureKinectDKFetch>(config.data_path(), config.isSaveOnlineFrame());
 	}else{
 		// any other io_mode?
 	}
