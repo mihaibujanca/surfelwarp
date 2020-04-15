@@ -18,6 +18,8 @@ surfelwarp::AzureKinectDKFetch::AzureKinectDKFetch(const path& data_path, bool s
 
     std::cout << "Started opening K4A device..." << std::endl;
     m_device = k4a::device::open(K4A_DEVICE_DEFAULT);
+    m_device.set_color_control(K4A_COLOR_CONTROL_CONTRAST, K4A_COLOR_CONTROL_MODE_MANUAL, 7);
+    m_device.set_color_control(K4A_COLOR_CONTROL_SHARPNESS, K4A_COLOR_CONTROL_MODE_MANUAL, 4);
     m_device.start_cameras(&device_config);
     std::cout << "Finished opening K4A device." << std::endl;
 
@@ -25,11 +27,56 @@ surfelwarp::AzureKinectDKFetch::AzureKinectDKFetch(const path& data_path, bool s
     k4a::calibration calibration_downscaled;
     memcpy(&calibration_downscaled, &calibration, sizeof(k4a::calibration));
 
-    DownscaleCalibration(calibration, calibration_downscaled, 3.2);
+    m_scale_factor = 3.2;
+    DownscaleCalibration(calibration, calibration_downscaled, m_scale_factor);
 
     m_frame_width_pixels = calibration_downscaled.color_camera_calibration.resolution_width;
     m_frame_height_pixels = calibration_downscaled.color_camera_calibration.resolution_height;
+    m_frame_size = cv::Size(m_frame_width_pixels, m_frame_height_pixels);
 
+    auto intrinsics = calibration.color_camera_calibration.intrinsics.parameters.param;
+    std::vector<double> _camera_matrix = {
+        intrinsics.fx / m_scale_factor,
+        0.0f,
+        intrinsics.cx / m_scale_factor,
+        0.0f,
+        intrinsics.fy / m_scale_factor,
+        intrinsics.cy / m_scale_factor,
+        0.0f,
+        0.0f,
+        1.0f
+    };
+    m_camera_matrix = cv::Mat(3, 3, CV_64F, &_camera_matrix[0]);
+
+    std::vector<double> _dist_coeffs = {
+        intrinsics.k1, intrinsics.k2, intrinsics.p1, intrinsics.p2, 
+        intrinsics.k3, intrinsics.k4, intrinsics.k5, intrinsics.k6
+    };
+    cv::Mat dist_coeffs = cv::Mat(8, 1, CV_64F, &_dist_coeffs[0]);
+
+    m_new_camera_matrix = cv::getOptimalNewCameraMatrix(
+        m_camera_matrix,
+        dist_coeffs,
+        m_frame_size,
+        0,
+        m_frame_size
+    );
+
+    m_map1 = cv::Mat::zeros(m_frame_size, CV_16SC2);
+    m_map2 = cv::Mat::zeros(m_frame_size, CV_16UC1);
+    cv::initUndistortRectifyMap(
+        m_camera_matrix,
+        dist_coeffs,
+        cv::Mat_<double>::eye(3, 3),
+        m_new_camera_matrix,
+        m_frame_size,
+        m_map1.type(), 
+        m_map1, 
+        m_map2
+    );
+
+    //m_color_image_undistorted = cv::Mat::zeros(m_frame_width_pixels, m_frame_height_pixels, CV_8UC3);
+    //m_depth_image_undistorted = cv::Mat::zeros(m_frame_width_pixels, m_frame_height_pixels, CV_16U);
     //print_calibration(calibration);
     //print_calibration(calibration_downscaled);
 
@@ -118,8 +165,16 @@ bool surfelwarp::AzureKinectDKFetch::TakeNewPictureFrame()
                    cv::Size(m_frame_width_pixels, m_frame_height_pixels),
                    0, 0, cv::INTER_AREA);
 
-        m_depth_image_vec.push_back(m_depth_image);
-        m_color_image_vec.push_back(m_color_image);
+        if(m_depth_image.size() != m_frame_size){
+            std::cout << m_depth_image.size() << " != " << m_frame_size << std::endl;
+        }
+
+        cv::remap(m_depth_image, m_depth_image_undistorted, m_map1, m_map2, cv::INTER_NEAREST);
+        cv::remap(m_color_image, m_color_image_undistorted, m_map1, m_map2, cv::INTER_LINEAR);
+
+
+        m_depth_image_vec.push_back(m_depth_image_undistorted);
+        m_color_image_vec.push_back(m_color_image_undistorted);
 
         if (m_save_online_frame)
         {
@@ -127,8 +182,8 @@ bool surfelwarp::AzureKinectDKFetch::TakeNewPictureFrame()
             char frame_idx_str[20];
             sprintf(frame_idx_str, "%06d", static_cast<int>(m_cur_frame_num));
             file_name += frame_idx_str;
-            cv::imwrite(file_name + ".depth.png", m_depth_image);
-            cv::imwrite(file_name + ".color.png", m_color_image);
+            cv::imwrite(file_name + ".depth.png", m_depth_image_undistorted);
+            cv::imwrite(file_name + ".color.png", m_color_image_undistorted);
         }
 
         m_cur_frame_num++;

@@ -41,17 +41,32 @@ namespace surfelwarp
 		cv::Mat m_color_image_rgba;
 		cv::Mat m_color_image_rgb;
 		cv::Mat m_color_image;
+		cv::Mat m_depth_image_undistorted;
+		cv::Mat m_color_image_undistorted;
+
+		// undistort
+		cv::Mat m_camera_matrix;
+		cv::Mat m_new_camera_matrix;
+		cv::Mat m_map1;
+		cv::Mat m_map2;
+
+
 		std::vector<cv::Mat> m_depth_image_vec;
 		std::vector<cv::Mat> m_color_image_vec;
+
+
 
 		// frame property
 		size_t m_cur_frame_num;
 		size_t m_frame_height_pixels;
 		size_t m_frame_width_pixels;
+		cv::Size m_frame_size;
 
 		// save the frame 
 		bool m_save_online_frame;
-
+        
+        // scale factor
+        float m_scale_factor;
 
 		path m_data_path;
 

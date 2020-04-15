@@ -1,7 +1,3 @@
-//
-// Created by wei on 5/22/18.
-//
-
 #include "common/common_utils.h"
 #include "common/ConfigParser.h"
 #include "core/SurfelWarpSerial.h"
@@ -24,9 +20,6 @@ int main(int argc, char** argv) {
 	auto& config = ConfigParser::Instance();
 	config.ParseConfig(config_path);
 
-	//The context
-	//auto context = initCudaContext();
-
 	//Save offline
 	bool offline_rendering = true;
 
@@ -42,6 +35,4 @@ int main(int argc, char** argv) {
             break;
         }
 	}
-	
-	//destroyCudaContext(context);
 }
