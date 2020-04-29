@@ -110,7 +110,7 @@ void surfelwarp::SurfelWarpSerial::ProcessFirstFrame() {
 	m_frame_idx++;
 }
 
-void surfelwarp::SurfelWarpSerial::ProcessNextFrameWithReinit(bool offline_save) {
+void surfelwarp::SurfelWarpSerial::ProcessNextFrameWithReinit(const ConfigParser &config) {
 	//Draw the required maps, assume the buffer is not mapped to cuda at input
 	const auto num_vertex = m_surfel_geometry[m_updated_geometry_index]->NumValidSurfels();
 	const float current_time = m_frame_idx - 1;
@@ -277,7 +277,7 @@ void surfelwarp::SurfelWarpSerial::ProcessNextFrameWithReinit(bool offline_save)
 	m_renderer->UnmapSurfelGeometryFromCuda(1);
 	
 	//Debug save
-	if(offline_save) {
+	if(config.isOfflineRendering()) {
 		const auto with_recent = draw_recent || use_reinit;
 		const auto& save_dir = createOrGetDataDirectory(m_frame_idx);
 		saveCameraObservations(observation, save_dir);
@@ -304,14 +304,19 @@ void surfelwarp::SurfelWarpSerial::saveCameraObservations(
 	const surfelwarp::CameraObservation &observation,
 	const boost::filesystem::path &save_dir
 ) {
-	//Save the segment mask
-	Visualizer::SaveSegmentMask(observation.foreground_mask, observation.normalized_rgba_map, (save_dir / "foreground_mask.png").string(), 1);
-
+	auto& config = ConfigParser::Instance();
+    //Save the segment mask
+    if (config.save_segment_mask){
+	    Visualizer::SaveSegmentMask(observation.foreground_mask, observation.normalized_rgba_map, (save_dir / "foreground_mask.png").string(), 1);
+    }
 	//Save the clipped, filtered depth image
-	Visualizer::SaveDepthImage(observation.filter_depth_img, (save_dir / "cliped_filter_depth.png").string());
-
+	if (config.save_filter_depth_image){
+        Visualizer::SaveDepthImage(observation.filter_depth_img, (save_dir / "cliped_filter_depth.png").string());
+    }
 	//Save the raw depth image
-	Visualizer::SaveDepthImage(observation.raw_depth_img, (save_dir / "raw_depth.png").string());
+    if (config.save_raw_depth_image){
+    	Visualizer::SaveDepthImage(observation.raw_depth_img, (save_dir / "raw_depth.png").string());
+    }
 }
 
 
@@ -341,27 +346,32 @@ void surfelwarp::SurfelWarpSerial::saveSolverMaps(
 	const boost::filesystem::path &save_dir
 ) {
 	//Save the rendered albedo maps
+	auto& config = ConfigParser::Instance();
+	if (config.save_reference_albedo_map)
 	Visualizer::SaveNormalizeRGBImage(solver_maps.normalized_rgb_map, (save_dir / "rendered_rgb.png").string());
 
 	//Save the index map
+	if (config.save_validity_index_map)
 	Visualizer::SaveValidIndexMap(solver_maps.index_map, 1, (save_dir / "validity_index_map.png").string());
 	
 	//Save the computed alignment error map
-	m_warp_solver->ComputeAlignmentErrorMapDirect();
-	cudaTextureObject_t alignment_error_map = m_warp_solver->GetAlignmentErrorMap();
-	Visualizer::SaveGrayScaleImage(alignment_error_map, (save_dir / "alignment_error_map_direct.png").string(), 10.0f);
-
-	//Compute again using nodes
-	m_warp_solver->ComputeAlignmentErrorMapFromNode();
-	alignment_error_map = m_warp_solver->GetAlignmentErrorMap();
-	Visualizer::SaveGrayScaleImage(alignment_error_map, (save_dir / "alignment_error_map_node.png").string(), 10.0f);
+	if (config.save_alignment_error_map){
+		m_warp_solver->ComputeAlignmentErrorMapDirect();
+		cudaTextureObject_t alignment_error_map = m_warp_solver->GetAlignmentErrorMap();
+		Visualizer::SaveGrayScaleImage(alignment_error_map, (save_dir / "alignment_error_map_direct.png").string(), 10.0f);
 	
-	//Do statistic about the error value
-	const auto node_error = m_warp_solver->GetNodeAlignmentError();
-	std::ofstream error_output;
-	error_output.open((save_dir/"node_error.txt").string());
-	node_error.errorStatistics(error_output);
-	error_output.close();
+		//Compute again using nodes
+		m_warp_solver->ComputeAlignmentErrorMapFromNode();
+		alignment_error_map = m_warp_solver->GetAlignmentErrorMap();
+		Visualizer::SaveGrayScaleImage(alignment_error_map, (save_dir / "alignment_error_map_node.png").string(), 10.0f);
+		
+		//Do statistic about the error value
+		const auto node_error = m_warp_solver->GetNodeAlignmentError();
+		std::ofstream error_output;
+		error_output.open((save_dir/"node_error.txt").string());
+		node_error.errorStatistics(error_output);
+		error_output.close();
+	}
 }
 
 
@@ -373,13 +383,20 @@ void surfelwarp::SurfelWarpSerial::saveVisualizationMaps(
 	const boost::filesystem::path &save_dir,
 	bool with_recent
 ) {
-	m_renderer->SaveLiveNormalMap(num_vertex, vao_idx, m_frame_idx, world2camera, (save_dir / "live_normal.png").string(), with_recent);
-	m_renderer->SaveLiveAlbedoMap(num_vertex, vao_idx, m_frame_idx, world2camera, (save_dir / "live_albedo.png").string(), with_recent);
-	m_renderer->SaveLivePhongMap (num_vertex, vao_idx, m_frame_idx, world2camera, (save_dir /  "live_phong.png").string(), with_recent);
+	auto & config = ConfigParser::Instance();
+	if (config.save_live_normal_map)
+		m_renderer->SaveLiveNormalMap(num_vertex, vao_idx, m_frame_idx, world2camera, (save_dir / "live_normal.png").string(), with_recent);
+	if (config.save_live_albedo_map)
+		m_renderer->SaveLiveAlbedoMap(num_vertex, vao_idx, m_frame_idx, world2camera, (save_dir / "live_albedo.png").string(), with_recent);
+	if (config.save_live_phong_map)
+		m_renderer->SaveLivePhongMap (num_vertex, vao_idx, m_frame_idx, world2camera, (save_dir /  "live_phong.png").string(), with_recent);
 
-	m_renderer->SaveReferenceNormalMap(num_vertex, vao_idx, m_frame_idx, init_world2camera, (save_dir / "reference_normal.png").string(), with_recent);
-	m_renderer->SaveReferenceAlbedoMap(num_vertex, vao_idx, m_frame_idx, init_world2camera, (save_dir / "reference_albedo.png").string(), with_recent);
-	m_renderer->SaveReferencePhongMap (num_vertex, vao_idx, m_frame_idx, init_world2camera, (save_dir /  "reference_phong.png").string(), with_recent);
+	if (config.save_reference_normal_map)
+		m_renderer->SaveReferenceNormalMap(num_vertex, vao_idx, m_frame_idx, init_world2camera, (save_dir / "reference_normal.png").string(), with_recent);
+	if (config.save_reference_albedo_map)
+		m_renderer->SaveReferenceAlbedoMap(num_vertex, vao_idx, m_frame_idx, init_world2camera, (save_dir / "reference_albedo.png").string(), with_recent);
+	if (config.save_reference_phong_map)
+		m_renderer->SaveReferencePhongMap (num_vertex, vao_idx, m_frame_idx, init_world2camera, (save_dir /  "reference_phong.png").string(), with_recent);
 }
 
 boost::filesystem::path surfelwarp::SurfelWarpSerial::createOrGetDataDirectory(int frame_idx) {

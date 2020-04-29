@@ -6,6 +6,11 @@
 
 #include <vector_functions.h>
 
+
+/*
+ * Possible reference: https://moderngpu.github.io/scan.html
+ */
+
 namespace surfelwarp {
 
     __device__ __forceinline__

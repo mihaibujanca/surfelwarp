@@ -20,6 +20,7 @@ void surfelwarp::ConfigParser::setDefaultParameters() {
 	setDefaultCameraIntrinsic();
 	setDefaultPenaltyConfigs();
 	setDefaultIOMode();
+	setDefaultOfflineRendering();
 }
 
 /* Public interface
@@ -43,6 +44,7 @@ void surfelwarp::ConfigParser::ParseConfig(const std::string & config_path) {
 	loadPenaltyConfigFromJson((const void*)&config_json);
 	loadIOModeFromJson((const void*)&config_json);
 	loadSaveOnlineFrame((const void*)&config_json);
+	loadOfflineRendering((const void*)&config_json);
 }
 
 void surfelwarp::ConfigParser::SaveConfig(const std::string & config_path) const {
@@ -59,6 +61,7 @@ void surfelwarp::ConfigParser::SaveConfig(const std::string & config_path) const
 	saveCameraIntrinsicToJson((void*)&config_json);
 	savePenaltyConfigToJson((void*)&config_json);
 	saveIOModeToJson((void*)&config_json);
+	saveOfflineRendering((void*)&config_json);
 
 	//Save it to file
 	std::ofstream file_output(config_path);
@@ -438,7 +441,85 @@ void surfelwarp::ConfigParser::loadSaveOnlineFrame(const void* json_ptr){
 		m_save_online_frame = config_json["save_online_frame"];
 	}
 }
-
 bool surfelwarp::ConfigParser::isSaveOnlineFrame() const{
 	return m_save_online_frame;
+}
+
+void surfelwarp::ConfigParser::setDefaultOfflineRendering(){
+	m_offline_rendering = false;
+	// save camera observation
+	save_segment_mask = false;
+	save_filter_depth_image = false;
+	save_raw_depth_image = false;
+	// save solver maps
+	save_rendered_albedo_map = false;
+	save_validity_index_map = false;
+	save_alignment_error_map = false;
+	// save visualization maps
+    save_live_normal_map = false;
+    save_live_albedo_map = false;
+    save_live_phong_map = false;
+    save_reference_normal_map = false;
+    save_reference_albedo_map = false;
+    save_reference_phong_map = false;
+
+}
+void surfelwarp::ConfigParser::loadOfflineRendering(const void* json_ptr){
+	//Recovery the json type
+	using json = nlohmann::json;
+	const auto& config_json = *((const json*)json_ptr);
+	if(config_json.find("offline_rendering") != config_json.end()){
+		m_offline_rendering = config_json["offline_rendering"];
+	}
+    if(config_json.find("save_segment_mask") != config_json.end()){
+        save_segment_mask = config_json["save_segment_mask"];
+    }
+    if(config_json.find("save_filter_depth_image") != config_json.end()){
+        save_filter_depth_image = config_json["save_filter_depth_image"];
+    }
+    if(config_json.find("save_raw_depth_image") != config_json.end()){
+        save_raw_depth_image = config_json["save_raw_depth_image"];
+    }	
+    if(config_json.find("save_rendered_albedo_map") != config_json.end()){
+        save_rendered_albedo_map = config_json["save_rendered_albedo_map"];
+    }
+    if(config_json.find("save_validity_index_map") != config_json.end()){
+        save_validity_index_map = config_json["save_validity_index_map"];
+    }
+    if(config_json.find("save_alignment_error_map") != config_json.end()){
+        save_alignment_error_map = config_json["save_alignment_error_map"];
+    }	
+	if(config_json.find("save_live_normal_map") != config_json.end()){
+		save_live_normal_map = config_json["save_live_normal_map"];
+	}
+	if(config_json.find("save_live_albedo_map") != config_json.end()){
+		save_live_albedo_map = config_json["save_live_albedo_map"];
+	}
+	if(config_json.find("save_live_phong_map") != config_json.end()){
+		save_live_phong_map = config_json["save_live_phong_map"];
+	}
+	if(config_json.find("save_reference_normal_map") != config_json.end()){
+		save_reference_normal_map = config_json["save_reference_normal_map"];
+	}
+	if(config_json.find("save_reference_albedo_map") != config_json.end()){
+		save_reference_albedo_map = config_json["save_reference_albedo_map"];
+	}
+	if(config_json.find("save_reference_phong_map") != config_json.end()){
+		save_reference_phong_map = config_json["save_reference_phong_map"];
+	}
+}
+
+void surfelwarp::ConfigParser::saveOfflineRendering(void* json_ptr) const{
+	//Recovery the json type
+	using json = nlohmann::json;
+	auto& config_json = *((json*)json_ptr);
+	config_json["offline_rendering"] = m_offline_rendering;
+}
+
+bool surfelwarp::ConfigParser::isOfflineRendering() const{
+	return m_offline_rendering;
+}
+
+void surfelwarp::ConfigParser::setOfflineRendering(bool offline_rendering){
+	m_offline_rendering = offline_rendering;
 }

@@ -136,6 +136,30 @@ namespace surfelwarp {
 		std::string getIOMode() const;
 		bool isSaveOnlineFrame() const;
 
+	private:
+		bool m_offline_rendering;
+		void setDefaultOfflineRendering();
+		void loadOfflineRendering(const void* json_ptr);
+		void saveOfflineRendering(void* json_ptr) const;
+	public:
+		bool isOfflineRendering() const;
+		void setOfflineRendering(bool offline_rendering);
+        // set public data member for convenience
+		// save camera observation
+	    bool save_segment_mask;
+	    bool save_filter_depth_image;
+	    bool save_raw_depth_image;
+	    // save solver maps
+	    bool save_rendered_albedo_map;
+	    bool save_validity_index_map;
+	    bool save_alignment_error_map;
+	    // save visualization maps
+        bool save_live_normal_map;
+        bool save_live_albedo_map;
+        bool save_live_phong_map;
+        bool save_reference_normal_map;
+        bool save_reference_albedo_map;
+        bool save_reference_phong_map;
 
 		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	};

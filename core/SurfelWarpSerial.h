@@ -71,7 +71,7 @@ namespace surfelwarp {
 		//Process the first frame
 		void ProcessFirstFrame();
 		void ProcessNextFrameNoReinit();
-		void ProcessNextFrameWithReinit(bool offline_save = true);
+		void ProcessNextFrameWithReinit(const ConfigParser &config);
 		//void ProcessNextFrameLegacySolver();
 		
 		//The testing methods

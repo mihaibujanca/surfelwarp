@@ -20,16 +20,13 @@ int main(int argc, char** argv) {
 	auto& config = ConfigParser::Instance();
 	config.ParseConfig(config_path);
 
-	//Save offline
-	bool offline_rendering = true;
-
 	//The processing loop
 	SurfelWarpSerial fusion;
 
 	fusion.ProcessFirstFrame();
 	for(auto i = config.start_frame_idx(); i < config.num_frames(); i++){
 		LOG(INFO) << "The " << i << "th Frame";
-		fusion.ProcessNextFrameWithReinit(offline_rendering);
+		fusion.ProcessNextFrameWithReinit(config);
 		if (cv::waitKey(WAIT_TIME) == 27 || cv::waitKey(WAIT_TIME) == 'q')
         {
             break;

@@ -12,5 +12,6 @@
     "reinit_period":30,
     "use_density":true,
     "use_foreground":false,
-    "use_offline_foreground":false
+    "use_offline_foreground":false,
+    "offline_rendering": false
 }
