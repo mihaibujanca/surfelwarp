@@ -330,7 +330,7 @@ void surfelwarp::SurfelWarpSerial::saveCorrespondedCloud(
 	
 	auto geometry = m_surfel_geometry[vao_idx]->Geometry();
 	Visualizer::SaveMatchedCloudPair(
-		observation.vertex_config_map,
+		observation.vertex_confid_map,
 		geometry.live_vertex_confid.ArrayView(),
 		m_camera.GetCamera2WorldEigen(),
 		cloud_1_name, cloud_2_name

@@ -22,7 +22,7 @@ void testBoundary()
 	
 	//CameraObservation observation;
 	//processor->ProcessFrameSerial(observation, 130);
-	//Visualizer::DrawColoredPointCloud(observation.vertex_config_map, observation.color_time_map);
+	//Visualizer::DrawColoredPointCloud(observation.vertex_confid_map, observation.color_time_map);
 
 	//Process using the observation interface
 	for(auto frame_idx = 10; frame_idx < 160; frame_idx++) {
@@ -30,7 +30,7 @@ void testBoundary()
 		CameraObservation observation;
 		processor->ProcessFrameSerial(observation, frame_idx);
 		if(frame_idx == 130) {
-			Visualizer::DrawColoredPointCloud(observation.vertex_config_map, observation.color_time_map);
+			Visualizer::DrawColoredPointCloud(observation.vertex_confid_map, observation.color_time_map);
 		}
 	}
 }
@@ -61,7 +61,7 @@ void testFullProcessing() {
 	
 	//Draw it
 	auto draw_func = [&]() {
-		//Visualizer::DrawPointCloud(observation.vertex_config_map);
+		//Visualizer::DrawPointCloud(observation.vertex_confid_map);
 		Visualizer::DrawSegmentMask(observation.foreground_mask, observation.normalized_rgba_map, 1);
 		//Visualizer::DrawGrayScaleImage(observation.filter_foreground_mask);
 	};

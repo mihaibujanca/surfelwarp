@@ -61,7 +61,7 @@ void surfelwarp::ImageProcessor::ProcessFrameStreamed(CameraObservation & observ
 
 	//The geometry maps
 	observation.filter_depth_img = FilteredDepthTexture();
-	observation.vertex_config_map = VertexConfidTexture();
+	observation.vertex_confid_map = VertexConfidTexture();
 	observation.normal_radius_map = NormalRadiusTexture();
 
 	//The color maps

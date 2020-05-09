@@ -36,10 +36,10 @@ void surfelwarp::SurfelWarpSerial::ProcessNextFrameLegacySolver() {
 	//Prepare maps
 	DeviceArray2D<float4> depth_vertex_map, depth_normal_map;
 	unsigned width, height;
-	query2DTextureExtent(observation.vertex_config_map, width, height);
+	query2DTextureExtent(observation.vertex_confid_map, width, height);
 	depth_vertex_map.create(height, width);
 	depth_normal_map.create(height, width);
-	textureToMap2D<float4>(observation.vertex_config_map, depth_vertex_map);
+	textureToMap2D<float4>(observation.vertex_confid_map, depth_vertex_map);
 	textureToMap2D<float4>(observation.normal_radius_map, depth_normal_map);
 	m_legacy_solver->SetInputMap(
 		maps.reference_vertex_map,
@@ -120,7 +120,7 @@ void surfelwarp::SurfelWarpSerial::ProcessNextFrameLegacySolver() {
 	auto draw_func = [&]()->void {
 		auto geometry = m_surfel_geometry[m_updated_geometry_index]->Geometry();
 		//The drawing method for solver
-		auto vertex_map = observation.vertex_config_map;
+		auto vertex_map = observation.vertex_confid_map;
 		auto live_cloud = DeviceArray<float4>(geometry.live_vertex_confid.RawPtr(), geometry.live_vertex_confid.Size());
 		Visualizer::DrawMatchedCloudPair(vertex_map, live_cloud, Eigen::Matrix4f::Identity());
 		
@@ -132,7 +132,7 @@ void surfelwarp::SurfelWarpSerial::ProcessNextFrameLegacySolver() {
 		
 		//Also draw the matched colored cloud pair
 		Visualizer::DrawMatchedCloudPair(
-			observation.vertex_config_map, observation.color_time_map,
+			observation.vertex_confid_map, observation.color_time_map,
 			geometry.live_vertex_confid.ArrayView(), geometry.color_time.ArrayView(),
 			Eigen::Matrix4f::Identity()
 		);
