@@ -10,10 +10,11 @@
     "num_frame":500,
     "depth_focal_x":301.788,"depth_focal_y":301.625,"depth_principal_x":318.688,"depth_principal_y":243.012,
     "rgb_focal_x":301.788,"rgb_focal_y":301.625,"rgb_principal_x":318.688,"rgb_principal_y":243.012,
-    "use_periodic_reinit":false,
+    "use_periodic_reinit":true,
     "reinit_period":30,
     "use_density":true,
     "use_foreground":false,
     "use_offline_foreground":false,
-    "offline_rendering": false
+    "offline_rendering": true,
+    "save_live_albedo_map": true
 }

@@ -49,7 +49,7 @@ void surfelwarp::Renderer::initGLFW() {
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	
 	//Defualt framebuffer properties
-	glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
+	//glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
 	glfwWindowHint(GLFW_SAMPLES, 1);
 	glfwWindowHint(GLFW_STEREO, GL_FALSE);
 	glfwWindowHint(GLFW_DOUBLEBUFFER, GL_TRUE);
@@ -62,7 +62,7 @@ void surfelwarp::Renderer::initGLFW() {
 	}
 	
 	//Setup of the window
-	mGLFWwindow = glfwCreateWindow(1920, 720, "SurfelWarp", NULL, NULL);
+	mGLFWwindow = glfwCreateWindow(m_image_width, m_image_height, "SurfelWarp", NULL, NULL);
 	if (mGLFWwindow == NULL) {
 		LOG(FATAL) << "The GLFW window is not correctly created";
 	}

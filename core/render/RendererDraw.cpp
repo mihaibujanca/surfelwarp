@@ -188,7 +188,8 @@ void surfelwarp::Renderer::drawVisualizationMap(
 	glBindVertexArray(geometry_vao);
 
 	//The size is image rows/cols
-	glBindFramebuffer(GL_FRAMEBUFFER, m_visualization_draw_buffers.visualization_map_fbo);
+	//glBindFramebuffer(GL_FRAMEBUFFER, m_visualization_draw_buffers.visualization_map_fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, m_image_width, m_image_height);
 
 	//Clear the render buffer object
@@ -215,6 +216,8 @@ void surfelwarp::Renderer::drawVisualizationMap(
 	//Draw it
 	glDrawArrays(GL_POINTS, 0, num_vertex);
 
+	glfwSwapBuffers(mGLFWwindow);
+	glfwPollEvents();
 	//Cleanup code
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glBindVertexArray(0);
@@ -262,7 +265,7 @@ void surfelwarp::Renderer::SaveLiveAlbedoMap(
 	);
 	
 	//Save it
-	m_visualization_draw_buffers.save(path);
+	//m_visualization_draw_buffers.save(path);
 }
 
 
