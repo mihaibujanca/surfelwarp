@@ -210,8 +210,10 @@ void surfelwarp::ImageProcessor::FetchRGBImage(size_t frame_idx)
 void surfelwarp::ImageProcessor::FetchRGBPrevFrame(size_t curr_frame_idx)
 {
 	//First compute the frame idx
+	auto config = ConfigParser::Instance();
+	
 	size_t prev_frame_idx;
-	if (curr_frame_idx == 0) prev_frame_idx = curr_frame_idx;
+	if (curr_frame_idx == config.start_frame_idx()) prev_frame_idx = curr_frame_idx;
 	else prev_frame_idx = curr_frame_idx - 1;
 
 	//Fetch it

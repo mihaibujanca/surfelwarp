@@ -56,9 +56,9 @@ namespace surfelwarp
 		static bool FilenameIndicatesRGBImage(const path& filename, const std::string& valid_extension);
 		static bool FilenameIndicatesMaskImage(const path& filename, const std::string& valid_extension);
 
-		std::vector<path> m_rgb_image_paths;
-		std::vector<path> m_depth_image_paths;
-		std::vector<path> m_mask_image_paths;
+		std::map<int, path> m_rgb_image_paths;
+		std::map<int, path> m_depth_image_paths;
+		std::map<int, path> m_mask_image_paths;
 
 		size_t m_mask_buffer_ix;
 		cv::Mat m_mask_image_buffer;
