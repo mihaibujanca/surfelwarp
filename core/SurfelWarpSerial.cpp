@@ -4,6 +4,7 @@
 
 #include "common/ConfigParser.h"
 #include "common/data_transfer.h"
+#include "common/TimeLogger.h"
 #include "core/SurfelWarpSerial.h"
 #include "core/warp_solver/WarpSolver.h"
 #include "core/geometry/SurfelNodeDeformer.h"
@@ -111,6 +112,7 @@ void surfelwarp::SurfelWarpSerial::ProcessFirstFrame() {
 }
 
 void surfelwarp::SurfelWarpSerial::ProcessNextFrameWithReinit(const ConfigParser &config) {
+	TimeLogger::printTimeLog("start to process a new frame");
 	//Draw the required maps, assume the buffer is not mapped to cuda at input
 	const auto num_vertex = m_surfel_geometry[m_updated_geometry_index]->NumValidSurfels();
 	const float current_time = m_frame_idx - 1;
@@ -125,21 +127,25 @@ void surfelwarp::SurfelWarpSerial::ProcessNextFrameWithReinit(const ConfigParser
 	else {
 		m_renderer->DrawSolverMapsConfidentObservation(num_vertex, m_updated_geometry_index, current_time, init_world2camera);
 	}
+	TimeLogger::printTimeLog("Draw Solver Maps");
 	
 	//Map to solver maps
 	Renderer::SolverMaps solver_maps;
 	m_renderer->MapSolverMapsToCuda(solver_maps);
 	m_renderer->MapSurfelGeometryToCuda(m_updated_geometry_index);
-	
+	TimeLogger::printTimeLog("Map to solver maps");
+
 	//Process the next depth frame
 	CameraObservation observation;
 	//m_image_processor->ProcessFrameSerial(observation, m_frame_idx);
 	m_image_processor->ProcessFrameStreamed(observation, m_frame_idx);
+	TimeLogger::printTimeLog("ImageProcess a frame");
 	
 	//First perform rigid solver
 	m_rigid_solver->SetInputMaps(solver_maps, observation, m_camera.GetWorld2Camera());
 	const mat34 solved_world2camera = m_rigid_solver->Solve();
 	m_camera.SetWorld2Camera(solved_world2camera);
+	TimeLogger::printTimeLog("rigid solve");
 	
 	//The resource from geometry attributes
 	const auto solver_geometry = m_surfel_geometry[m_updated_geometry_index]->SolverAccess();
@@ -158,7 +164,8 @@ void surfelwarp::SurfelWarpSerial::ProcessNextFrameWithReinit(const ConfigParser
 	//m_warp_solver->SolveSerial();
 	m_warp_solver->SolveStreamed();
 	const auto solved_se3 = m_warp_solver->SolvedNodeSE3();
-	
+	TimeLogger::printTimeLog("non-rigid solve");
+
 	//Do a forward warp and build index
 	m_warp_field->UpdateHostDeviceNodeSE3NoSync(solved_se3);
 	SurfelNodeDeformer::ForwardWarpSurfelsAndNodes(*m_warp_field, *m_surfel_geometry[m_updated_geometry_index], solved_se3);
@@ -181,7 +188,8 @@ void surfelwarp::SurfelWarpSerial::ProcessNextFrameWithReinit(const ConfigParser
 	//Map both maps to surfelwarp as they are both required
 	m_renderer->MapSurfelGeometryToCuda(0);
 	m_renderer->MapSurfelGeometryToCuda(1);
-	
+	TimeLogger::printTimeLog("something after non-rigid solve");
+
 	//The hand tune variable now. Should be replaced later
 	const bool use_reinit = shouldDoReinit();
 	const bool do_integrate = shouldDoIntegration();
@@ -225,6 +233,7 @@ void surfelwarp::SurfelWarpSerial::ProcessNextFrameWithReinit(const ConfigParser
 		auto skinner_geometry = m_surfel_geometry[fused_geometry_idx]->SkinnerAccess();
 		auto skinner_warpfield = m_warp_field->SkinnerAccess();
 		m_reference_knn_skinner->PerformSkinning(skinner_geometry, skinner_warpfield);
+		TimeLogger::printTimeLog("reinit");
 	} else if(do_integrate) {
 		//Update the frame idx
 		fused_geometry_idx = (m_updated_geometry_index + 1) % 2;
@@ -269,12 +278,14 @@ void surfelwarp::SurfelWarpSerial::ProcessNextFrameWithReinit(const ConfigParser
 			auto skinner_warpfield = m_warp_field->SkinnerAccess();
 			m_reference_knn_skinner->PerformSkinningUpdate(skinner_geometry, skinner_warpfield, prev_node_size);
 		}
+		TimeLogger::printTimeLog("intergrate");
 	}
 	
 	//Unmap attributes
 	m_renderer->UnmapFusionMapsFromCuda();
 	m_renderer->UnmapSurfelGeometryFromCuda(0);
 	m_renderer->UnmapSurfelGeometryFromCuda(1);
+	TimeLogger::printTimeLog("free render");
 	
 	//Debug save
 	if(config.isOfflineRendering()) {
@@ -289,6 +300,7 @@ void surfelwarp::SurfelWarpSerial::ProcessNextFrameWithReinit(const ConfigParser
 			m_camera.GetWorld2CameraEigen(), m_camera.GetInitWorld2CameraEigen(),
 			save_dir, with_recent
 		);
+		TimeLogger::printTimeLog("debug save");
 	}
 	
 	//Update the index

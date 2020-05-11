@@ -27,9 +27,12 @@ int main(int argc, char** argv) {
 	for(auto i = config.start_frame_idx(); i < config.num_frames(); i++){
 		LOG(INFO) << "The " << i << "th Frame";
 		fusion.ProcessNextFrameWithReinit(config);
+
+		/*
 		if (cv::waitKey(WAIT_TIME) == 27 || cv::waitKey(WAIT_TIME) == 'q')
         {
             break;
         }
+		*/
 	}
 }
