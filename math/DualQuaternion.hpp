@@ -178,10 +178,11 @@ namespace surfelwarp {
 		// simpler (and faster) version
 		// according to '4. Implemention Notes' in 'Geometric Skinning with Approximate Dual Quaternion Blending'
 		// 
-		__host__ __device__ mat34 se3_matrix_f() {
+		__host__ __device__ mat34 mat34_f() {
 			const float inv_norm = q0.norm_inversed();
 			mat33 r = (q0 * inv_norm).matrix();	
 			float3 t = (2 * (q1 * inv_norm) * (q0 * inv_norm).conjugate()).vec();
+			return mat34(r, t);
 		}
 
 		//This might mutate the value
