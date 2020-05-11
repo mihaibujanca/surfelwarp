@@ -44,6 +44,7 @@ data/*
 
 # The build files
 build/*
+debug/*
 
 # The file for Visual studio, vs code, clion
 .vscode/*
