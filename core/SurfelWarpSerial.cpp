@@ -11,6 +11,7 @@
 #include "visualization/Visualizer.h"
 #include "imgproc/frameio/FetchInterface.h"
 #include "imgproc/frameio/GenericFileFetch.h"
+#include "imgproc/frameio/VolumeDeformFileFetch.h"
 #include "imgproc/frameio/AzureKinectDKFetch.h"
 
 #include <thread>
@@ -22,13 +23,15 @@ surfelwarp::SurfelWarpSerial::SurfelWarpSerial() {
 	
 	//Construct the image processor
 	FetchInterface::Ptr fetcher;
-	// default if local_file mode
-	if(config.getIOMode()== "local_file") {
+	
+	if(config.getIOMode() == "GenericFileFetch") {
 		fetcher = std::make_shared<GenericFileFetch>(config.data_path());
+	}else if(config.getIOMode() == "VolumeDeformFileFetch"){
+		fetcher = std::make_shared<VolumeDeformFileFetch>(config.data_path());
 	}else if (config.getIOMode() == "kinect_dk"){
 		fetcher = std::make_shared<AzureKinectDKFetch>(config.data_path(), config.isSaveOnlineFrame());
 	}else{
-		// any other io_mode?
+		throw(std::runtime_error(config.getIOMode() + " io_mode not supported"));
 	}
 
 	m_image_processor = std::make_shared<ImageProcessor>(fetcher);

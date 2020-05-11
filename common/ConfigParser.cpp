@@ -405,7 +405,7 @@ bool surfelwarp::ConfigParser::use_density_term() const {
 }
 
 void surfelwarp::ConfigParser::setDefaultIOMode() {
-	m_io_mode = "local_file";
+	m_io_mode = "GenericFileFetch";
 }
 
 std::string surfelwarp::ConfigParser::getIOMode() const {

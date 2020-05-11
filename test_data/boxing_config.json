@@ -1,4 +1,5 @@
 {
+    "io_mode": "VolumeDeformFileFetch",
     "clip_far":1300,
     "clip_near":10,
     "data_prefix":"/data/DATASETS/VolumeDeform/boxing/data",
