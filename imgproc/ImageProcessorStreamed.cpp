@@ -26,7 +26,9 @@ void surfelwarp::ImageProcessor::syncAllProcessorStream() {
 }
 
 void surfelwarp::ImageProcessor::ProcessFrameStreamed(CameraObservation & observation, size_t frame_idx) {
+	TimeLogger::printTimeLog("enter function ProcessFrameStreamed", "\t");
 	FetchFrame(frame_idx);
+	TimeLogger::printTimeLog("fetch frame", "\t");
 	UploadDepthImage(m_processor_stream[0]);
 	UploadRawRGBImage(m_processor_stream[0]);
 
@@ -43,13 +45,16 @@ void surfelwarp::ImageProcessor::ProcessFrameStreamed(CameraObservation & observ
 
 	//Sync here
 	cudaSafeCall(cudaStreamSynchronize(m_processor_stream[0]));
+	TimeLogger::printTimeLog("process images", "\t");
 
 	//Invoke other expensive computations
 	SegmentForeground(frame_idx, m_processor_stream[0]); //This doesn't block, even for hashing based method
 	FindCorrespondence(m_processor_stream[1]); //This will block, thus sync inside
+	TimeLogger::printTimeLog("find correspondence", "\t");
 
 	//The gradient map depends on filtered mask
 	cudaSafeCall(cudaStreamSynchronize(m_processor_stream[0]));
+	TimeLogger::printTimeLog("wait for segment foreground", "\t");
 	ComputeGradientMap(m_processor_stream[0]);
 
 	//Sync and output

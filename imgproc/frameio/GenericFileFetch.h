@@ -48,6 +48,7 @@ namespace surfelwarp
 		//Should be rgb, in CV_8UC3 format
 		void FetchRGBImage(size_t frame_idx, cv::Mat& rgb_img) override;
 		void FetchRGBImage(size_t frame_idx, void* rgb_img) override;
+		void FetchDepthAndRGBImage(size_t frame_idx, cv::Mat& depth_img, cv::Mat& rgb_img) override;
 
 	private:
 		static int GetFrameNumber(const path& filename);

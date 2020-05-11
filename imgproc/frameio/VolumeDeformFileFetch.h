@@ -1,5 +1,7 @@
 #pragma once
 #include "FetchInterface.h"
+#include <mutex>
+#include <thread>
 #include <string>
 #include <boost/filesystem.hpp>
 
@@ -17,9 +19,7 @@ namespace surfelwarp
 		using path = boost::filesystem::path;
 
 		//Just copy the string to data path
-		explicit VolumeDeformFileFetch(
-			const path& data_path
-		) : m_data_path(data_path) {}
+		explicit VolumeDeformFileFetch(const path& data_path);
 
 
 		~VolumeDeformFileFetch() = default;
@@ -29,6 +29,7 @@ namespace surfelwarp
 		void FetchDepthImage(size_t frame_idx, void* depth_img) override;
 		void FetchRGBImage(size_t frame_idx, cv::Mat& rgb_img) override;
 		void FetchRGBImage(size_t frame_idx, void* rgb_img) override;
+		void FetchDepthAndRGBImage(size_t frame_idx, cv::Mat& depth_img, cv::Mat& rgb_img) override;
 
 	private:
 		path m_data_path; //The path prefix for the data
@@ -36,5 +37,13 @@ namespace surfelwarp
 		//A series of naming functions
 		path FileNameVolumeDeform(size_t frame_idx, bool is_depth_img) const;
 		path FileNameSurfelWarp(size_t frame_idx, bool is_depth_img) const;
+
+		size_t m_cur_frame_idx;
+		std::thread m_thread;
+		std::list<cv::Mat> m_depth_images;
+		std::list<cv::Mat> m_color_images;
+
+		void ReadImageFromFile();
+		std::mutex m_mutex;
 	};
 }

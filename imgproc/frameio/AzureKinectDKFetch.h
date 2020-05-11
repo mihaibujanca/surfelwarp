@@ -27,6 +27,8 @@ namespace surfelwarp
 		void FetchRGBImage(size_t frame_idx, cv::Mat& rgb_img) override;
 		void FetchRGBImage(size_t frame_idx, void* rgb_img) override;
 
+		void FetchDepthAndRGBImage(size_t frame_idx, cv::Mat& depth_img, cv::Mat& rgb_img) override;
+
 	private:
 		// kinect dk handle
 		k4a::device m_device;

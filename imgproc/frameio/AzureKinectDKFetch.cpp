@@ -124,6 +124,15 @@ void surfelwarp::AzureKinectDKFetch::FetchRGBImage(size_t frame_idx, void *rgb_i
 {
 }
 
+void surfelwarp::AzureKinectDKFetch::FetchDepthAndRGBImage(size_t frame_idx, cv::Mat& depth_img, cv::Mat& rgb_img){
+    while(frame_idx >= m_cur_frame_num){
+        TakeNewPictureFrame();
+    }
+    rgb_img = m_color_image_vec[frame_idx];
+    depth_img = m_depth_image_vec[frame_idx];
+}
+
+
 void surfelwarp::AzureKinectDKFetch::DownscaleCalibration(const k4a::calibration calibration, k4a::calibration &new_calibration, float scale)
 {
     new_calibration.color_camera_calibration.resolution_width /= scale;

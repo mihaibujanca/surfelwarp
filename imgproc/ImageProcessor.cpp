@@ -185,9 +185,29 @@ void surfelwarp::ImageProcessor::releaseFetchBuffer()
 
 void surfelwarp::ImageProcessor::FetchFrame(size_t frame_idx)
 {
-	FetchDepthImage(frame_idx);
-	FetchRGBImage(frame_idx);
-	FetchRGBPrevFrame(frame_idx);
+	// store current rgb image
+    m_rgb_img_stored = m_rgb_img;
+    // fetch current depth and rgb image
+	m_image_fetcher->FetchDepthAndRGBImage(frame_idx, m_depth_img, m_rgb_img);
+
+	// fetch rgb image prev
+	auto config = ConfigParser::Instance();
+	if (frame_idx == config.start_frame_idx()) {
+		m_rgb_img_prev = m_rgb_img;
+	}else {
+		m_rgb_img_prev = m_rgb_img_stored;
+	}
+	
+    //Must explict perform this copy?
+	memcpy(m_depth_buffer_pagelock, m_depth_img.data, 
+		sizeof(unsigned short) * m_raw_img_cols * m_raw_img_rows
+	);
+	memcpy(m_rgb_buffer_pagelock, m_rgb_img.data,
+		sizeof(uchar3) * m_raw_img_rows * m_raw_img_cols
+	);
+	memcpy(m_rgb_prev_buffer_pagelock, m_rgb_img_prev.data,
+		sizeof(uchar3) * m_raw_img_rows * m_raw_img_cols
+	);
 }
 
 void surfelwarp::ImageProcessor::FetchDepthImage(size_t frame_idx)
@@ -201,6 +221,7 @@ void surfelwarp::ImageProcessor::FetchDepthImage(size_t frame_idx)
 
 void surfelwarp::ImageProcessor::FetchRGBImage(size_t frame_idx)
 {
+	m_rgb_img_stored = m_rgb_img;
 	m_image_fetcher->FetchRGBImage(frame_idx, m_rgb_img);
 	memcpy(m_rgb_buffer_pagelock, m_rgb_img.data,
 		sizeof(uchar3) * m_raw_img_rows * m_raw_img_cols
@@ -212,12 +233,12 @@ void surfelwarp::ImageProcessor::FetchRGBPrevFrame(size_t curr_frame_idx)
 	//First compute the frame idx
 	auto config = ConfigParser::Instance();
 	
-	size_t prev_frame_idx;
-	if (curr_frame_idx == config.start_frame_idx()) prev_frame_idx = curr_frame_idx;
-	else prev_frame_idx = curr_frame_idx - 1;
+	if (curr_frame_idx == config.start_frame_idx()) {
+		m_rgb_img_prev = m_rgb_img;
+	}else {
+		m_rgb_img_prev = m_rgb_img_stored;
+	}
 
-	//Fetch it
-	m_image_fetcher->FetchRGBImage(prev_frame_idx, m_rgb_img_prev);
 	memcpy(m_rgb_prev_buffer_pagelock, m_rgb_img_prev.data,
 		sizeof(uchar3) * m_raw_img_rows * m_raw_img_cols
 	);

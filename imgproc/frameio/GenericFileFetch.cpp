@@ -188,3 +188,8 @@ void surfelwarp::GenericFileFetch::FetchRGBImage(size_t frame_idx, void* rgb_img
 {
 
 }
+
+void surfelwarp::GenericFileFetch::FetchDepthAndRGBImage(size_t frame_id, cv::Mat& depth_img, cv::Mat& rgb_img){
+	std::cout << "Error: not implemented yet." << std::endl;
+	exit(-1);
+}
