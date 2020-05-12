@@ -471,6 +471,12 @@ void surfelwarp::ConfigParser::loadOfflineRendering(const void* json_ptr){
 	if(config_json.find("offline_rendering") != config_json.end()){
 		m_offline_rendering = config_json["offline_rendering"];
 	}
+	if(config_json.find("save_all") != config_json.end()){
+		save_segment_mask = save_filter_depth_image = save_raw_depth_image = \
+		save_rendered_albedo_map = save_validity_index_map = save_alignment_error_map = \
+		save_live_normal_map = save_live_albedo_map = save_live_phong_map = \
+		save_reference_albedo_map = save_reference_normal_map = save_reference_phong_map = true;
+	}
     if(config_json.find("save_segment_mask") != config_json.end()){
         save_segment_mask = config_json["save_segment_mask"];
     }

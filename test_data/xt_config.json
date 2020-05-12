@@ -1,5 +1,5 @@
 {
-    "io_mode": "VilumeDeformFileFetch",
+    "io_mode": "VolumeDeformFileFetch",
     "clip_far":1300,
     "clip_near":10,
     "data_prefix":"/data/DATASETS/VolumeDeform/aircleaner/data",
@@ -15,5 +15,6 @@
     "use_foreground":false,
     "use_offline_foreground":false,
     "offline_rendering": true,
+    "save_all": true,
     "save_live_albedo_map": true
 }

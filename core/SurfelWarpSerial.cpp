@@ -416,9 +416,10 @@ void surfelwarp::SurfelWarpSerial::saveVisualizationMaps(
 
 boost::filesystem::path surfelwarp::SurfelWarpSerial::createOrGetDataDirectory(int frame_idx) {
 	//Construct the path
-	boost::filesystem::path result_folder("frame_" + std::to_string(frame_idx));
+
+	boost::filesystem::path result_folder("temp/frame_" + std::to_string(frame_idx));
 	if(!boost::filesystem::exists(result_folder)) {
-		boost::filesystem::create_directory(result_folder);
+		boost::filesystem::create_directories(result_folder);
 	}
 	
 	//The directory should be always exist
