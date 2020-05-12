@@ -169,6 +169,31 @@ void surfelwarp::SurfelWarpSerial::ProcessNextFrameWithReinit(const ConfigParser
 	const auto solved_se3 = m_warp_solver->SolvedNodeSE3();
 	TimeLogger::printTimeLog("non-rigid solve");
 
+    if(config.save_se3){
+		// download se3
+		std::vector<DualQuaternion> se3_h;
+		solved_se3.Download(se3_h);
+
+		// download coord
+		std::vector<float4> coord_h;
+		solver_warpfield.reference_node_coords.Download(coord_h);
+
+		if(coord_h.size() != se3_h.size()){
+			std::cout << "Error!" << std::endl;
+		}
+
+		// save into file
+		char filename[50];
+		sprintf(filename, "temp/se3_frame_%06d.log", m_frame_idx);
+		std::ofstream of(filename, std::ios::ios_base::out);
+		for (int i = 0; i < se3_h.size(); i++){
+			of << se3_h[i] << coord_h[i] << std::endl;
+		}
+		//for(auto it = se3_h.begin(); it != se3_h.end(); it++){
+		//	of << *it << std::endl;
+		//}
+    }
+
 	//Do a forward warp and build index
 	m_warp_field->UpdateHostDeviceNodeSE3NoSync(solved_se3);
 	SurfelNodeDeformer::ForwardWarpSurfelsAndNodes(*m_warp_field, *m_surfel_geometry[m_updated_geometry_index], solved_se3);

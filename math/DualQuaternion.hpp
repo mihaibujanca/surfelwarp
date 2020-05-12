@@ -122,7 +122,7 @@ namespace surfelwarp {
 		{
 			return DualNumber(q0.w(), q1.w());
 		}
-		
+
 		__host__ __device__ DualQuaternion conjugate() const
 		{
 			return{ q0.conjugate(), q1.conjugate() };
@@ -216,6 +216,11 @@ namespace surfelwarp {
 		const Quaternion quat0 = _dn.q0*_dq.q0;
 		const Quaternion quat1 = _dn.q0*_dq.q1 + _dn.q1*_dq.q0;
 		return{ quat0, quat1 };
+	}
+
+	__host__ __forceinline__ std::ostream& operator<<(std::ostream & os, const DualQuaternion & dq){
+		os << dq.q0 << dq.q1;
+		return os;
 	}
 
 	__host__ __device__ __forceinline__ DualQuaternion averageDualQuaternion(

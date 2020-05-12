@@ -462,6 +462,7 @@ void surfelwarp::ConfigParser::setDefaultOfflineRendering(){
     save_reference_normal_map = false;
     save_reference_albedo_map = false;
     save_reference_phong_map = false;
+    save_se3 = false;
 
 }
 void surfelwarp::ConfigParser::loadOfflineRendering(const void* json_ptr){
@@ -513,6 +514,9 @@ void surfelwarp::ConfigParser::loadOfflineRendering(const void* json_ptr){
 	if(config_json.find("save_reference_phong_map") != config_json.end()){
 		save_reference_phong_map = config_json["save_reference_phong_map"];
 	}
+    if(config_json.find("save_se3") != config_json.end()){
+        save_se3 = config_json["save_se3"];
+    }
 }
 
 void surfelwarp::ConfigParser::saveOfflineRendering(void* json_ptr) const{

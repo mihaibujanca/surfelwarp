@@ -160,6 +160,8 @@ namespace surfelwarp {
         bool save_reference_normal_map;
         bool save_reference_albedo_map;
         bool save_reference_phong_map;
+        // save se3
+        bool save_se3;
 
 		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	};
