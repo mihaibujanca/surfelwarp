@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
 	SurfelWarpSerial fusion;
 
 	fusion.ProcessFirstFrame();
-	for(auto i = config.start_frame_idx(); i < config.num_frames(); i++){
+	for(auto i = config.start_frame_idx() + 1; i < config.num_frames(); i++){
 		LOG(INFO) << "The " << i << "th Frame";
 		fusion.ProcessNextFrameWithReinit(config);
 	}

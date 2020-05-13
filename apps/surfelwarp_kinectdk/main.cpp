@@ -2,6 +2,7 @@
 #include "common/ConfigParser.h"
 #include "core/SurfelWarpSerial.h"
 #include <boost/filesystem.hpp>
+#include <cuda_profiler_api.h>
 
 #define WAIT_TIME 5
 
@@ -20,11 +21,13 @@ int main(int argc, char** argv) {
 	auto& config = ConfigParser::Instance();
 	config.ParseConfig(config_path);
 
+    cudaProfilerStart();
+
 	//The processing loop
 	SurfelWarpSerial fusion;
 
 	fusion.ProcessFirstFrame();
-	for(auto i = config.start_frame_idx(); i < config.num_frames(); i++){
+	for(auto i = config.start_frame_idx() + 1; i < config.num_frames(); i++){
 		LOG(INFO) << "The " << i << "th Frame";
 		fusion.ProcessNextFrameWithReinit(config);
 
@@ -35,4 +38,6 @@ int main(int argc, char** argv) {
         }
 		*/
 	}
+    
+    cudaProfilerStop();
 }

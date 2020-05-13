@@ -29,20 +29,26 @@ void surfelwarp::ImageProcessor::ProcessFrameStreamed(CameraObservation & observ
 	TimeLogger::printTimeLog("enter function ProcessFrameStreamed", "\t");
 	FetchFrame(frame_idx);
 	TimeLogger::printTimeLog("fetch frame", "\t");
+	cudaSafeCall(cudaStreamSynchronize(m_processor_stream[0]));
+	TimeLogger::printTimeLog("sync first", "\t");
+	// upload to cuda sometimes takes 10ms
 	UploadDepthImage(m_processor_stream[0]);
 	UploadRawRGBImage(m_processor_stream[0]);
-
+	cudaSafeCall(cudaStreamSynchronize(m_processor_stream[0]));
+	TimeLogger::printTimeLog("upload to cuda", "\t");
 	//This seems cause some problem ,disable it at first
 	//ReprojectDepthToRGB(stream);
 
 	ClipFilterDepthImage(m_processor_stream[0]);
 	ClipNormalizeRGBImage(m_processor_stream[0]);
-
+	cudaSafeCall(cudaStreamSynchronize(m_processor_stream[0]));
+	TimeLogger::printTimeLog("clip filter and normalize", "\t");
 	//The geometry map
 	BuildVertexConfigMap(m_processor_stream[0]);
 	BuildNormalRadiusMap(m_processor_stream[0]);
 	BuildColorTimeTexture(frame_idx, m_processor_stream[0]);
-
+	cudaSafeCall(cudaStreamSynchronize(m_processor_stream[0]));
+	TimeLogger::printTimeLog("build geometry map", "\t");
 	//Sync here
 	cudaSafeCall(cudaStreamSynchronize(m_processor_stream[0]));
 	TimeLogger::printTimeLog("process images", "\t");

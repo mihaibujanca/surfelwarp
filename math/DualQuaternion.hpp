@@ -1,6 +1,7 @@
 #pragma once
 #include "math/Quaternion.hpp"
 #include "math/vector_ops.hpp"
+#include "math/numeric_limits.hpp"
 
 namespace surfelwarp {
 
@@ -183,6 +184,18 @@ namespace surfelwarp {
 			mat33 r = (q0 * inv_norm).matrix();	
 			float3 t = (2 * (q1 * inv_norm) * (q0 * inv_norm).conjugate()).vec();
 			return mat34(r, t);
+		}
+		__host__ __device__ void convert2(float3& axis_angle, float3& trans) {
+			const float inv_norm = q0.norm_inversed();
+			Quaternion q0_normed = q0 * inv_norm;
+			float sin_v;
+			if(q0_normed.w() >= 1 - numeric_limits<float>::epsilon()){
+				sin_v = numeric_limits<float>::epsilon();
+			}else{
+				sin_v = 1 / sqrtf(1 - q0_normed.w() * q0_normed.w());
+			}
+			axis_angle = q0_normed.vec() * sin_v;
+			trans = (2 * (q1 * inv_norm) * q0_normed.conjugate()).vec();
 		}
 
 		//This might mutate the value

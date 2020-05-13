@@ -114,6 +114,11 @@ void surfelwarp::SurfelWarpSerial::ProcessFirstFrame() {
 	m_frame_idx++;
 }
 
+static std::ostream & operator << (std::ostream & os, float3 vec){
+	os << vec.x << "\t" << vec.y << "\t" << vec.z << "\t";
+	return os;
+}
+
 void surfelwarp::SurfelWarpSerial::ProcessNextFrameWithReinit(const ConfigParser &config) {
 	TimeLogger::printTimeLog("start to process a new frame");
 	//Draw the required maps, assume the buffer is not mapped to cuda at input
@@ -144,6 +149,7 @@ void surfelwarp::SurfelWarpSerial::ProcessNextFrameWithReinit(const ConfigParser
 	m_image_processor->ProcessFrameStreamed(observation, m_frame_idx);
 	TimeLogger::printTimeLog("ImageProcess a frame");
 	
+	// (xt) TODO: utilize IMU data to initialize W2C, to deal with fast camera move
 	//First perform rigid solver
 	m_rigid_solver->SetInputMaps(solver_maps, observation, m_camera.GetWorld2Camera());
 	const mat34 solved_world2camera = m_rigid_solver->Solve();
@@ -186,8 +192,21 @@ void surfelwarp::SurfelWarpSerial::ProcessNextFrameWithReinit(const ConfigParser
 		char filename[50];
 		sprintf(filename, "temp/se3_frame_%06d.log", m_frame_idx);
 		std::ofstream of(filename, std::ios::ios_base::out);
+
 		for (int i = 0; i < se3_h.size(); i++){
-			of << se3_h[i] << coord_h[i] << std::endl;
+			// transformation(dq) of node i
+			DualQuaternion dq = se3_h[i];
+			// position of node i
+			float4 pos = coord_h[i];
+			float3 p = make_float3(pos.x, pos.y, pos.z);
+			// transformation(axis_angle and trans) of node i
+			float3 axis_angle, trans;
+			dq.convert2(axis_angle, trans);
+			// transformation(mat34) of node i
+			mat34 m = se3_h[i].mat34_f();
+			// displacement of node i
+			float3 d = dq * p - p; 
+			of << se3_h[i] << coord_h[i] << axis_angle << trans << d << std::endl;
 		}
 		//for(auto it = se3_h.begin(); it != se3_h.end(); it++){
 		//	of << *it << std::endl;

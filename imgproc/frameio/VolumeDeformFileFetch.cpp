@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include "common/OpenCV_CrossPlatform.h"
 #include "common/ConfigParser.h"
+#include "common/logging.h"
 #include "VolumeDeformFileFetch.h"
 
 
@@ -17,6 +18,7 @@ surfelwarp::VolumeDeformFileFetch::VolumeDeformFileFetch(const path& data_path) 
 void surfelwarp::VolumeDeformFileFetch::FetchDepthImage(size_t frame_idx, cv::Mat & depth_img)
 {
 	//Read the image
+	LOG(WARNING) << "Deprecated, please use FetchDepthAndRGBImage instaed!" << std::endl;
 	if (frame_idx == m_cur_frame_idx){
 		std::unique_lock<std::mutex> lock(m_mutex);
 		depth_img = m_depth_images.front();
@@ -34,6 +36,7 @@ void surfelwarp::VolumeDeformFileFetch::FetchDepthImage(size_t frame_idx, void *
 
 void surfelwarp::VolumeDeformFileFetch::FetchRGBImage(size_t frame_idx, cv::Mat & rgb_img)
 {
+	LOG(WARNING) << "Deprecated, please use FetchDepthAndRGBImage instaed!" << std::endl;
 	if(frame_idx == m_cur_frame_idx){
 		std::unique_lock<std::mutex> lock(m_mutex);
 		rgb_img = m_color_images.front();
@@ -45,17 +48,31 @@ void surfelwarp::VolumeDeformFileFetch::FetchRGBImage(size_t frame_idx, cv::Mat 
 }
 
 void surfelwarp::VolumeDeformFileFetch::FetchDepthAndRGBImage(size_t frame_idx, cv::Mat & depth_img, cv::Mat & rgb_img){
-	if(frame_idx == m_cur_frame_idx){
-		std::unique_lock<std::mutex> lock(m_mutex);
-		rgb_img = m_color_images.front();
-		m_color_images.pop_front();
-
-		depth_img = m_depth_images.front();
-		m_depth_images.pop_front();
-	}else{
-		std::cout << "this should not happen, just for debug" << std::endl;
-		std::cout << "fetch frame_idx: " << frame_idx << ";  cur_frame_idx: " << m_cur_frame_idx << std::endl;
+	// (xt): This loop maybe not needed, just leave it at now.
+	for(int i = 0; i <= 3; i++){
+		bool is_empty = true;
+		{
+			std::unique_lock<std::mutex> lock(m_mutex);
+			// make sure image has already been read 
+			if(m_color_images.size() > 0 && m_color_images.size() > 0){
+				is_empty = false;
+				// make sure the current frame is the one wanted
+				SURFELWARP_CHECK_EQ(frame_idx, m_cur_frame_idx);
+			}
+		}
+		if(is_empty){
+			// wait for read image
+			usleep(10000);
+		}else{
+			std::unique_lock<std::mutex> lock(m_mutex);
+			rgb_img = m_color_images.front();
+			m_color_images.pop_front();
+			depth_img = m_depth_images.front();
+			m_depth_images.pop_front();
+			return;
+		}
 	}
+	LOG(FATAL) << "time out to fetch images" << std::endl;
 }
 
 void surfelwarp::VolumeDeformFileFetch::FetchRGBImage(size_t frame_idx, void * rgb_img)
@@ -99,29 +116,30 @@ void surfelwarp::VolumeDeformFileFetch::ReadImageFromFile(){
             bool d_empty = m_depth_images.empty();
             bool c_empty = m_color_images.empty();
             if (d_empty != c_empty){
-                std::cout << "Error: the number of depth_image and color_image is not queal!" << std::endl;
+                LOG(FATAL) << "Error: the number of depth_image and color_image is not queal!" << std::endl;
                 break;
             }
 		    is_empty = d_empty && c_empty;
         }
         if (is_empty){
             std::unique_lock<std::mutex> lock(m_mutex);
+			m_cur_frame_idx ++; 
 
-		    m_cur_frame_idx ++; 
-
-            path file_path;
-            file_path = FileNameSurfelWarp(m_cur_frame_idx, true);
-            if (! boost::filesystem::exists(file_path)){
+            path depth_file_path = FileNameSurfelWarp(m_cur_frame_idx, true);
+            if (! boost::filesystem::exists(depth_file_path)){
+				LOG(WARNING) << depth_file_path << " not exists!" << std::endl;
                 break;
             }
-        	cv::Mat depth_img = cv::imread(file_path.string(), CV_ANYCOLOR | CV_ANYDEPTH);
+    	    path rgb_file_path = FileNameSurfelWarp(m_cur_frame_idx, false);
+        	if (! boost::filesystem::exists(rgb_file_path)){
+				LOG(WARNING) << rgb_file_path << " not exists!" << std::endl;
+                break;
+            }
+
+        	cv::Mat depth_img = cv::imread(depth_file_path.string(), CV_ANYCOLOR | CV_ANYDEPTH);
 		    m_depth_images.push_back(depth_img);
 
-    	    file_path = FileNameSurfelWarp(m_cur_frame_idx, false);
-        	if (! boost::filesystem::exists(file_path)){
-                break;
-            }
-            cv::Mat rgb_img = cv::imread(file_path.string(), CV_ANYCOLOR | CV_ANYDEPTH);
+            cv::Mat rgb_img = cv::imread(rgb_file_path.string(), CV_ANYCOLOR | CV_ANYDEPTH);
     		m_color_images.push_back(rgb_img);
         } else {
             usleep(3000);
