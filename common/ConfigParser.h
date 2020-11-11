@@ -41,7 +41,17 @@ namespace surfelwarp {
 	public:
 		int start_frame_idx() const;
 		int num_frames() const;
-		
+
+		/* Frame skipping
+		 */
+	private:
+		int m_frame_skip;
+		void setDefaultFrameSkip();
+		void saveFrameSkipToJson(void* json_ptr) const;
+		void loadFrameSkipFromJson(const void* json_ptr);
+	public:
+		int frame_skip() const;
+
 		
 		//The frame peroids for reinit and recent
 	private:

@@ -7,7 +7,6 @@
 #include "core/render/GLRenderedMaps.h"
 
 #include <cuda_gl_interop.h>
-#include <opencv2/opencv.hpp>
 
 static const cudaResourceDesc& resource_desc_cuarray() {
 	static cudaResourceDesc desc;
@@ -104,7 +103,6 @@ void surfelwarp::GLFusionMapsFrameRenderBufferObjects::release() {
 	//Clear the frame buffer objects
 	glDeleteFramebuffers(1, &fusion_map_fbo);
 }
-
 
 void surfelwarp::GLFusionMapsFrameRenderBufferObjects::mapToCuda(
 	cudaTextureObject_t & warp_vertex_texture, 
@@ -287,7 +285,6 @@ void surfelwarp::GLSolverMapsFrameRenderBufferObjects::unmapFromCuda(cudaStream_
 	cudaSafeCall(cudaGraphicsUnmapResources(6, cuda_rbo_resources, stream));
 }
 
-
 /* The buffer and methods for offline visualization frame & render buffer objects
  */
 void surfelwarp::GLOfflineVisualizationFrameRenderBufferObjects::initialize(int width, int height) {
@@ -333,8 +330,6 @@ void surfelwarp::GLOfflineVisualizationFrameRenderBufferObjects::release() {
 	glDeleteFramebuffers(1, &visualization_map_fbo);
 }
 
-
-
 void surfelwarp::GLOfflineVisualizationFrameRenderBufferObjects::save(const std::string &path) {
 	//Bind the render buffer object
 	glBindRenderbuffer(GL_RENDERBUFFER, normalized_rgba_rbo);
@@ -357,5 +352,24 @@ void surfelwarp::GLOfflineVisualizationFrameRenderBufferObjects::save(const std:
 	cv::imwrite(path, rendered_map_cv);
 }
 
+cv::Mat surfelwarp::GLOfflineVisualizationFrameRenderBufferObjects::toOpenCV() {
+	//Bind the render buffer object
+	glBindRenderbuffer(GL_RENDERBUFFER, normalized_rgba_rbo);
 
+	//First query the size of render buffer object
+	GLint width, height;
+	glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &width);
+	glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &height);
 
+	//Construct the storage
+        cv::Mat rendered_map_cv(height, width, CV_8UC4);
+	glBindFramebuffer(GL_FRAMEBUFFER, visualization_map_fbo);
+	glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, rendered_map_cv.data);
+
+	//Cleanup code
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+	//Save it
+	return rendered_map_cv;
+}

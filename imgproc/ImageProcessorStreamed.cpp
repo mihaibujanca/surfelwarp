@@ -25,15 +25,21 @@ void surfelwarp::ImageProcessor::syncAllProcessorStream() {
 	cudaSafeCall(cudaStreamSynchronize(m_processor_stream[2]));
 }
 
-void surfelwarp::ImageProcessor::ProcessFrameStreamed(CameraObservation & observation, size_t frame_idx) {
-	FetchFrame(frame_idx);
-	UploadDepthImage(m_processor_stream[0]);
+void surfelwarp::ImageProcessor::ProcessFrameStreamed(CameraObservation & observation, size_t frame_idx, const cv::Mat* rgb, const cv::Mat* depth) {
+    if (rgb && depth) {
+        LoadPrevRGBImageFromOpenCV();
+        LoadRGBImageFromOpenCV(*rgb);
+        LoadDepthImageFromOpenCV(*depth);
+    } else {
+        FetchFrame(frame_idx);
+    }
+        UploadDepthImage(m_processor_stream[0]);
 	UploadRawRGBImage(m_processor_stream[0]);
 
 	//This seems cause some problem ,disable it at first
 	//ReprojectDepthToRGB(stream);
 
-	ClipFilterDepthImage(m_processor_stream[0]);
+	ClipFilterDepthImage(m_processor_stream[0]); // should come from preprocessor
 	ClipNormalizeRGBImage(m_processor_stream[0]);
 
 	//The geometry map
@@ -45,6 +51,7 @@ void surfelwarp::ImageProcessor::ProcessFrameStreamed(CameraObservation & observ
 	cudaSafeCall(cudaStreamSynchronize(m_processor_stream[0]));
 
 	//Invoke other expensive computations
+        // TODO: make sure segmentation on Jetson is bound to m_processor_stream[0]
 	SegmentForeground(frame_idx, m_processor_stream[0]); //This doesn't block, even for hashing based method
 	FindCorrespondence(m_processor_stream[1]); //This will block, thus sync inside
 

@@ -109,9 +109,9 @@ SURFELWARP_DEFINE_CHECK_FUNC(_NE, !=)
 		LogMessageFatal& operator=(LogMessageFatal&) = delete;
 		
 		//Die the whole system
-		~LogMessageFatal() {
+		~LogMessageFatal() noexcept {
 			LOG_BEFORE_THROW << log_stream_.str();
-			throw new std::runtime_error(log_stream_.str());
+			throw std::runtime_error(log_stream_.str());
 		}
 		
 		//The output string stream

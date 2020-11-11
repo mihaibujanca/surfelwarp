@@ -86,6 +86,3 @@ void surfelwarp::ForegroundSegmenterOffline::Segment(cudaStream_t stream) {
 		stream
 	);
 }
-
-
-

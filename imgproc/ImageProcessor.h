@@ -35,9 +35,15 @@ namespace surfelwarp {
 		SURFELWARP_NO_COPY_ASSIGN_MOVE(ImageProcessor);
 
 		//This is not thread-safe
-		DeviceArrayView<DepthSurfel> ProcessFirstFrameSerial(size_t frame_idx, cudaStream_t stream = 0);
-		void ProcessFrameSerial(CameraObservation& observation, size_t frame_idx, cudaStream_t stream = 0);
-
+        DeviceArrayView<DepthSurfel> ProcessFirstFrameSerial(size_t frame_idx,
+                                                             cudaStream_t stream = nullptr,
+                                                             const cv::Mat* rgb = nullptr,
+                                                             const cv::Mat* depth = nullptr);
+        void ProcessFrameSerial(CameraObservation& observation,
+                                size_t frame_idx,
+                                cudaStream_t stream = nullptr,
+                                const cv::Mat* rgb = nullptr,
+                                const cv::Mat* depth = nullptr);
 		/**
 		* \brief The global data member
 		*/
@@ -79,6 +85,9 @@ namespace surfelwarp {
 		void FetchDepthImage(size_t frame_idx);
 		void FetchRGBImage(size_t frame_idx);
 		void FetchRGBPrevFrame(size_t curr_frame_idx);
+        void LoadDepthImageFromOpenCV(const cv::Mat& depth_img);
+        void LoadPrevRGBImageFromOpenCV();
+        void LoadRGBImageFromOpenCV(const cv::Mat& rgb_img);
         const cv::Mat& RawDepthImageCPU() const { return m_depth_img; }
         const cv::Mat& RawRGBImageCPU() const { return m_rgb_img; }
 
@@ -254,6 +263,9 @@ namespace surfelwarp {
 		void releaseProcessorStream();
 		void syncAllProcessorStream();
 	public:
-		void ProcessFrameStreamed(CameraObservation& observation, size_t frame_idx);
+		void ProcessFrameStreamed(CameraObservation& observation,
+                                  size_t frame_idx,
+                                  const cv::Mat* rgb = nullptr,
+                                  const cv::Mat* depth = nullptr);
 	};
 }

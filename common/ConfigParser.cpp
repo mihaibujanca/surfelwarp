@@ -19,6 +19,7 @@ void surfelwarp::ConfigParser::setDefaultParameters() {
 	setDefaultClipValue();
 	setDefaultCameraIntrinsic();
 	setDefaultPenaltyConfigs();
+    setDefaultFrameSkip();
 }
 
 /* Public interface
@@ -30,7 +31,6 @@ void surfelwarp::ConfigParser::ParseConfig(const std::string & config_path) {
 	json config_json;
 	std::ifstream input_file(config_path);
 	input_file >> config_json;
-	input_file.close();
 
 	//The path from json, these are requested
 	loadPathConfigFromJson((const void*)&config_json);
@@ -40,6 +40,10 @@ void surfelwarp::ConfigParser::ParseConfig(const std::string & config_path) {
 	loadClipValueFromJson((const void*)&config_json);
 	loadCameraIntrinsicFromJson((const void*)&config_json);
 	loadPenaltyConfigFromJson((const void*)&config_json);
+	loadFrameSkipFromJson((const void*)&config_json);
+
+//        if(input_file.is_open())
+//            input_file.close();
 }
 
 void surfelwarp::ConfigParser::SaveConfig(const std::string & config_path) const {
@@ -55,6 +59,7 @@ void surfelwarp::ConfigParser::SaveConfig(const std::string & config_path) const
 	saveClipValueToJson((void*)&config_json);
 	saveCameraIntrinsicToJson((void*)&config_json);
 	savePenaltyConfigToJson((void*)&config_json);
+	saveFrameSkipToJson((void*)&config_json);
 
 	//Save it to file
 	std::ofstream file_output(config_path);
@@ -162,7 +167,37 @@ int surfelwarp::ConfigParser::num_frames() const {
 	return m_num_frames;
 }
 
+//The query about frame
+void surfelwarp::ConfigParser::setDefaultFrameSkip() {
+    m_frame_skip = 0;
+}
 
+void surfelwarp::ConfigParser::saveFrameSkipToJson(void * json_ptr) const {
+    //Recovery the json type
+    using json = nlohmann::json;
+    auto& config_json = *((json*)json_ptr);
+
+    //Save it
+    config_json["frame_skip"] = m_frame_skip;
+}
+
+void surfelwarp::ConfigParser::loadFrameSkipFromJson(const void * json_ptr) {
+    //Recovery the json type
+    using json = nlohmann::json;
+    const auto& config_json = *((const json*)json_ptr);
+
+    //Load it, these parameter are not required
+    //but implemented as required for debug
+    SURFELWARP_CHECK(config_json.find("frame_skip") != config_json.end());
+
+    //load it
+    m_frame_skip = config_json["frame_skip"];
+}
+
+
+int surfelwarp::ConfigParser::frame_skip() const {
+    return m_frame_skip;
+}
 //The method about peroids
 void surfelwarp::ConfigParser::setDefaultPeroidsValue() {
 	m_use_periodic_reinit = false;

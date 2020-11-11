@@ -6,6 +6,7 @@
 #include "common/ConfigParser.h"
 #include "common/Constants.h"
 #include "core/warp_solver/solver_constants.h"
+#include <opencv2/opencv.hpp>
 
 /* Compile and initialize the shader program
  * used for later drawing methods
@@ -242,7 +243,7 @@ void surfelwarp::Renderer::SaveLiveNormalMap(
 	//Save it
 	m_visualization_draw_buffers.save(path);
 }
-
+// FIXME: can be simplified into a single function and pass parameter
 void surfelwarp::Renderer::SaveLiveAlbedoMap(
 	unsigned num_vertex,
 	int vao_idx,
@@ -263,6 +264,26 @@ void surfelwarp::Renderer::SaveLiveAlbedoMap(
 	
 	//Save it
 	m_visualization_draw_buffers.save(path);
+}
+
+cv::Mat surfelwarp::Renderer::OpenCVAlbedoMap(
+	unsigned num_vertex,
+	int vao_idx,
+	int current_time,
+	const surfelwarp::Matrix4f &world2camera,
+	bool with_recent
+) {
+	//Draw it
+	const auto geometry_vao = m_live_geometry_vao[vao_idx];
+	drawVisualizationMap(
+		m_visualization_shaders.albedo_map,
+		geometry_vao,
+		num_vertex, current_time,
+		world2camera,
+		with_recent
+	);
+
+	return m_visualization_draw_buffers.toOpenCV();
 }
 
 

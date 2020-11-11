@@ -69,10 +69,14 @@ namespace surfelwarp {
 		SURFELWARP_NO_COPY_ASSIGN_MOVE(SurfelWarpSerial);
 		
 		//Process the first frame
-		void ProcessFirstFrame();
+		void ProcessFirstFrame(const cv::Mat* rgb = nullptr, const cv::Mat* depth = nullptr);
 		void ProcessNextFrameNoReinit();
 		void ProcessNextFrameWithReinit(bool offline_save = true);
-		//void ProcessNextFrameLegacySolver();
+                void Process(const cv::Mat* rgb = nullptr, const cv::Mat* depth = nullptr, bool compute_pose = false);
+                cv::Mat getLiveModelFrame();
+                void SetPose(const Eigen::Matrix4f& pose);
+                Eigen::Matrix4f GetPose();
+        //void ProcessNextFrameLegacySolver();
 		
 		//The testing methods
 		void TestGeometryProcessing();
@@ -80,9 +84,6 @@ namespace surfelwarp {
 		void TestSolverWithRigidTransform();
 		void TestRigidSolver();
 		void TestPerformance();
-
-		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-		
 		
 		
 		/* The method to save the informaiton for offline visualization/debug
@@ -109,7 +110,7 @@ namespace surfelwarp {
 			const boost::filesystem::path& save_dir,
 			bool with_recent = true
 		);
-	
+
 		//The directory for this iteration
 		static boost::filesystem::path createOrGetDataDirectory(int frame_idx);
 

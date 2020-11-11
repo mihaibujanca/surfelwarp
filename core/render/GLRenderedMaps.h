@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include <opencv2/opencv.hpp>
 #include "core/render/glad/glad.h"
 #include <cuda_runtime_api.h>
 
@@ -98,5 +99,6 @@ namespace surfelwarp {
 		//Save it as opencv images.
 		//Of course, this method should never be used in real-time code
 		void save(const std::string& path);
+		cv::Mat toOpenCV();
 	};
 }

@@ -20,7 +20,6 @@
 
 #include <memory>
 
-
 surfelwarp::ImageProcessor::ImageProcessor(const surfelwarp::FetchInterface::Ptr &fetcher) : m_image_fetcher(fetcher) {
 	//Access the singleton
 	const auto& config = ConfigParser::Instance();
@@ -74,9 +73,20 @@ surfelwarp::ImageProcessor::~ImageProcessor()
  */
 surfelwarp::DeviceArrayView<surfelwarp::DepthSurfel> surfelwarp::ImageProcessor::ProcessFirstFrameSerial(
 	size_t frame_idx,
-	cudaStream_t stream
+	cudaStream_t stream,
+        const cv::Mat* rgb,
+        const cv::Mat* depth
 ) {
-	FetchFrame(frame_idx);
+        if(rgb && depth)
+        {
+            LoadPrevRGBImageFromOpenCV();
+            LoadDepthImageFromOpenCV(*depth);
+            LoadRGBImageFromOpenCV(*rgb);
+        }
+        else
+        {
+            FetchFrame(frame_idx);
+        }
 	UploadDepthImage(stream);
 	UploadRawRGBImage(stream);
 	
@@ -98,14 +108,23 @@ surfelwarp::DeviceArrayView<surfelwarp::DepthSurfel> surfelwarp::ImageProcessor:
 	return DeviceArrayView<DepthSurfel>(surfel_array.ptr(), surfel_array.size());
 }
 
-
-
 void surfelwarp::ImageProcessor::ProcessFrameSerial(
 	CameraObservation & observation, 
-	size_t frame_idx, 
-	cudaStream_t stream
+	size_t frame_idx,
+        cudaStream_t stream,
+        const cv::Mat* rgb,
+        const cv::Mat* depth
 ) {
-	FetchFrame(frame_idx);
+    if(rgb && depth)
+    {
+        LoadPrevRGBImageFromOpenCV();
+        LoadDepthImageFromOpenCV(*depth);
+        LoadRGBImageFromOpenCV(*rgb);
+    }
+    else
+    {
+        FetchFrame(frame_idx);
+    }
 	UploadDepthImage(stream);
 	UploadRawRGBImage(stream);
 
@@ -154,7 +173,6 @@ void surfelwarp::ImageProcessor::ProcessFrameSerial(
 	observation.correspondence_pixel_pairs = DeviceArrayView<ushort4>(pixel_pair_array.ptr(), pixel_pair_array.size());
 }
 
-
 /**
  * The image fetching methods implementation.
  */
@@ -185,9 +203,9 @@ void surfelwarp::ImageProcessor::releaseFetchBuffer()
 
 void surfelwarp::ImageProcessor::FetchFrame(size_t frame_idx)
 {
-	FetchDepthImage(frame_idx);
-	FetchRGBImage(frame_idx);
-	FetchRGBPrevFrame(frame_idx);
+    FetchDepthImage(frame_idx);
+    FetchRGBImage(frame_idx);
+    FetchRGBPrevFrame(frame_idx);
 }
 
 void surfelwarp::ImageProcessor::FetchDepthImage(size_t frame_idx)
@@ -219,6 +237,30 @@ void surfelwarp::ImageProcessor::FetchRGBPrevFrame(size_t curr_frame_idx)
 	memcpy(m_rgb_prev_buffer_pagelock, m_rgb_img_prev.data,
 		sizeof(uchar3) * m_raw_img_rows * m_raw_img_cols
 	);
+}
+
+void surfelwarp::ImageProcessor::LoadDepthImageFromOpenCV(const cv::Mat& depth_img)
+{
+    //Must explict perform this copy?
+    memcpy(m_depth_buffer_pagelock, depth_img.data,
+           sizeof(unsigned short) * m_raw_img_cols * m_raw_img_rows
+    );
+}
+
+void surfelwarp::ImageProcessor::LoadRGBImageFromOpenCV(const cv::Mat& rgb_img)
+{
+    //Must explict perform this copy?
+    memcpy(m_rgb_buffer_pagelock, rgb_img.data,
+           sizeof(uchar3) * m_raw_img_rows * m_raw_img_cols
+    );
+}
+
+void surfelwarp::ImageProcessor::LoadPrevRGBImageFromOpenCV() {
+//    TODO: this is to be called at the beginning of the computation
+    m_rgb_img_prev = m_rgb_img.clone();
+    memcpy(m_rgb_prev_buffer_pagelock, m_rgb_img_prev.data,
+           sizeof(uchar3) * m_raw_img_rows * m_raw_img_cols
+    );
 }
 
 /**
@@ -300,7 +342,6 @@ void surfelwarp::ImageProcessor::ClipFilterDepthImage(cudaStream_t stream) {
 		stream
 	);
 }
-
 
 /**
 * The RGB cliping and normalization methods implementation.
@@ -386,7 +427,6 @@ void surfelwarp::ImageProcessor::ClipNormalizeRGBImage(cudaStream_t stream)
 	);
 }
 
-
 /**
 * The methods for building geometry (vertex, normal and radius) maps
 */
@@ -409,7 +449,6 @@ void surfelwarp::ImageProcessor::releaseGeometryTexture()
 	releaseTextureCollect(m_normal_radius_collect);
 }
 
-
 void surfelwarp::ImageProcessor::BuildVertexConfigMap(cudaStream_t stream)
 {
 	const IntrinsicInverse clip_intrinsic_inv = inverse(m_clip_rgb_intrinsic);
@@ -430,7 +469,6 @@ void surfelwarp::ImageProcessor::BuildNormalRadiusMap(cudaStream_t stream) {
 		stream
 	);
 }
-
 
 /**
 * The methods for building color_time maps
@@ -509,7 +547,6 @@ void surfelwarp::ImageProcessor::CollectValidDepthSurfel(cudaStream_t stream)
 	);
 }
 
-
 /**
 * The methods for foreground segmentation
 */
@@ -546,7 +583,6 @@ void surfelwarp::ImageProcessor::SegmentForeground(int frame_idx, cudaStream_t s
 	m_foreground_segmenter->Segment(stream);
 }
 
-
 /* Method for sparse feature correspondence
  */
 void surfelwarp::ImageProcessor::allocateFeatureCorrespondenceBuffer() {
@@ -573,7 +609,6 @@ void surfelwarp::ImageProcessor::FindCorrespondence(cudaStream_t stream) {
 	m_feature_correspondence_finder->FindCorrespondence(stream);
 }
 
-
 /* The method for compute the gradient map
  */
 void surfelwarp::ImageProcessor::allocateGradientMap()
@@ -587,7 +622,6 @@ void surfelwarp::ImageProcessor::releaseGradientMap()
 	releaseTextureCollect(m_foreground_mask_gradient_map_collect);
 	releaseTextureCollect(m_density_gradient_map_collect);
 }
-
 
 void surfelwarp::ImageProcessor::ComputeGradientMap(cudaStream_t stream)
 {

@@ -140,10 +140,3 @@ void surfelwarp::WarpField::CheckNodeKNN() {
 		m_node_knn.ArrayView()
 	);
 }
-
-
-
-
-
-
-
