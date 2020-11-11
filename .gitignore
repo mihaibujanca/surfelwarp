@@ -55,6 +55,6 @@ cmake-build*
 # The glad loading library
 # *glad*
 # *khr*
-
+test_data/sintel_small_speed
 # the result directory
 *results/*
