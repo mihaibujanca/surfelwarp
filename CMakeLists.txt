@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 
 project(surfelwarp)
 
@@ -6,7 +6,7 @@ project(surfelwarp)
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # Language options
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(VISUALIZATION_LIBRARY "cilantro")
 
@@ -14,7 +14,7 @@ set(VISUALIZATION_LIBRARY "cilantro")
 find_package(CUDA 9 REQUIRED)
 set(CUDA_PROPAGATE_HOST_FLAGS OFF)
 include_directories(${CUDA_INCLUDE_DIRS})
-set(CUDA_ARCH "50 through 61" CACHE STRING "Architecture(s) for which to generate CUDA PTX code")
+set(CUDA_ARCH "75" CACHE STRING "Architecture(s) for which to generate CUDA PTX code")
 if(CUDA_VERSION_MAJOR LESS 10)
     set_property(CACHE CUDA_ARCH PROPERTY STRINGS "50 through 61" "50" "60" "61")
 else()
@@ -82,6 +82,7 @@ set(EIGEN_INCLUDE_DIR ${EIGEN_ROOT})
 set(EIGEN3_INCLUDE_DIR ${EIGEN_ROOT})
 include_directories(BEFORE ${EIGEN3_INCLUDE_DIR} ${EIGEN_INCLUDE_DIR})
 
+add_definitions(-DCUB_USE_COOPERATIVE_GROUPS)
 # The cub package
 set(CUB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/cub-1.8.0")
 include_directories(${CUB_DIR})

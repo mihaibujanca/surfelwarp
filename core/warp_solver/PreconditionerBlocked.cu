@@ -355,11 +355,12 @@ namespace surfelwarp { namespace device {
 			}
 
 			//Continue if everything is outside
-			if(__all(!term_valid))
+//			if(__all(!term_valid))
+			if(__all_sync(0xFFFFFFFF,!term_valid))
 				continue;
 
 			//Do a reduction to reduced_men
-			__syncthreads();
+//			__syncthreads();
 			for (int i = 0; i < preconditioner_blk_size; i++) {
 				float data = (iter < term_size && term_valid) ? shared_blks[i][threadIdx.x] : 0.0f;
 				data = warp_scan(data);
