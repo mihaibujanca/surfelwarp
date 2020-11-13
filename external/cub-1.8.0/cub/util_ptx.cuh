@@ -715,7 +715,7 @@ inline __device__ unsigned int MatchAny(unsigned int label)
             "    and.b32 %0, %1, %2;"
             "    setp.eq.u32 p, %0, %2;\n"
 #ifdef CUB_USE_COOPERATIVE_GROUPS
-            "    vote.sync.ballot.sync.b32 %0, p, 0xffffffff, 0xffffffff;\n"
+            "    vote.ballot.sync.b32 %0, p, 0xffffffff;\n"
 #else
             "    vote.ballot.b32 %0, p;\n"
 #endif
