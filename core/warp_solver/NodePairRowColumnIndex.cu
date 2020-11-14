@@ -3,8 +3,7 @@
 #include "core/warp_solver/term_offset_types.h"
 #include "core/warp_solver/solver_encode.h"
 #include "core/warp_solver/NodePair2TermsIndex.h"
-#include <device_launch_parameters.h>
-#include <math_functions.h>
+#include <cuda_runtime_api.h>
 
 namespace surfelwarp { namespace device {
 

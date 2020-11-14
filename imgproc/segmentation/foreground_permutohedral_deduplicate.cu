@@ -5,8 +5,7 @@
 #include "imgproc/segmentation/permutohedral_common.h"
 
 #include <device_launch_parameters.h>
-#include <device_functions.h>
-#include <math_functions.h>
+#include <cuda_runtime_api.h>
 
 namespace surfelwarp { namespace device {
 	

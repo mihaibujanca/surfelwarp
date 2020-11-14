@@ -68,11 +68,16 @@ if(MSVC)
 endif(MSVC)
 # The library and compiler flags on Ubuntu
 if(UNIX)
-    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -g -G --use_fast_math -std=c++14 -Xcompiler=-fPIC")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fPIC -std=c++17")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
+    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -O3 --use_fast_math -std=c++17")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 endif(UNIX)
 
+if(${SLAMBENCH_AVAILABLE})
+    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler=-fPIC")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
+endif()
 # Append "d" to library versions with debugging symbols
 set(CMAKE_DEBUG_POSTFIX d)
 

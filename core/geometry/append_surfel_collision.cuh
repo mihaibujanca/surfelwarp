@@ -2,7 +2,7 @@
 
 #include "math/vector_ops.hpp"
 #include "math/DualQuaternion.hpp"
-#include <math_functions.h>
+#include <cuda_runtime_api.h>
 
 namespace surfelwarp {
 	

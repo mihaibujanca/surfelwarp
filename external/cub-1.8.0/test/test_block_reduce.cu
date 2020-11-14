@@ -35,7 +35,7 @@
 
 #include <stdio.h>
 
-#include <device_functions.h>
+#include <cuda_runtime_api.h>
 #include <typeinfo>
 
 #include <cub/block/block_reduce.cuh>

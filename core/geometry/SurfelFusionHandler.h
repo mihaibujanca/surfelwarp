@@ -40,7 +40,7 @@ namespace surfelwarp {
 		~SurfelFusionHandler();
 		SURFELWARP_NO_COPY_ASSIGN(SurfelFusionHandler);
 		
-		//The input requires all CamearObservation
+		//The input requires all CameraObservation
 		void SetInputs(
 			const Renderer::FusionMaps& maps,
 			const CameraObservation& observation,

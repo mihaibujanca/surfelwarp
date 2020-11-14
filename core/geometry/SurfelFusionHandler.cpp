@@ -88,7 +88,7 @@ surfelwarp::DeviceArrayView<unsigned> surfelwarp::SurfelFusionHandler::GetAppend
 
 void surfelwarp::SurfelFusionHandler::ProcessFusion(cudaStream_t stream) {
 	//Debug check
-	//SURFELWARP_CHECK(!containsNaN(m_fusion_geometry.live_vertex_confid.ArrayView()));
+	SURFELWARP_CHECK(!containsNaN(m_fusion_geometry.live_vertex_confid.ArrayView()));
 	
 	//Do fusion
 	if(m_use_atomic_append) processFusionAppendAtomic(stream);
