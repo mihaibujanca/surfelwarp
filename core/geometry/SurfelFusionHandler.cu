@@ -519,7 +519,7 @@ void surfelwarp::SurfelFusionHandler::compactAppendedIndicator(cudaStream_t stre
 		stream
 	));
 	
-	cudaSafeCall(cudaStreamSynchronize(stream));
+//	cudaSafeCall(cudaStreamSynchronize(stream));
 	m_compacted_appended_pixel.ResizeArrayOrException(num_appended_surfel);
 }
 
@@ -532,6 +532,6 @@ void surfelwarp::SurfelFusionHandler::queryAtomicAppendedPixelSize(cudaStream_t 
 		cudaMemcpyDeviceToHost,
 		stream)
 	);
-	cudaSafeCall(cudaStreamSynchronize(stream));
+//	cudaSafeCall(cudaStreamSynchronize(stream));
 	m_atomic_appended_observation_pixel.ResizeArrayOrException(num_candidate_pixels);
 }

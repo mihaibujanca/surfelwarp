@@ -294,8 +294,10 @@ void hashing::TicketBoardSet<KeyT>::AllocateBuffer(
 	cudaMalloc((void**)&m_temp_storage, m_temp_storage_bytes);
 
 	//Check allocate error
-	cudaSafeCall(cudaDeviceSynchronize());
+#if defined(CUDA_DEBUG_SYNC_CHECK)
+    cudaSafeCall(cudaDeviceSynchronize());
 	cudaSafeCall(cudaGetLastError());
+#endif
 }
 
 
@@ -308,8 +310,10 @@ void hashing::TicketBoardSet<KeyT>::ReleaseBuffer()
 	cudaFree(m_temp_storage);
 	cudaFree(m_valid_indicator);
 	//Check free error
-	cudaSafeCall(cudaDeviceSynchronize());
+#if defined(CUDA_DEBUG_SYNC_CHECK)
+    cudaSafeCall(cudaDeviceSynchronize());
 	cudaSafeCall(cudaGetLastError());
+#endif
 	m_table_size = 0;
 	m_temp_storage_bytes = 0;
 }

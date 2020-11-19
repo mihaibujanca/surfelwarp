@@ -192,7 +192,7 @@ void surfelwarp::VoxelSubsamplerSorting::sortCompactVoxelKeys(
 		cudaMemcpyDeviceToHost,
 		stream
 	));
-	cudaSafeCall(cudaStreamSynchronize(stream));
+//	cudaSafeCall(cudaStreamSynchronize(stream));
 	
 	//Construct the compacted array
 	m_compacted_voxel_key.ResizeArrayOrException(num_voxels);

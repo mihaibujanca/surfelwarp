@@ -225,7 +225,7 @@ bool hashing::cuckooInsert(
 
 	//Check success or not
 	cudaSafeCall(cudaMemcpyAsync(&host_failure, d_failure, sizeof(unsigned int), cudaMemcpyDeviceToHost, stream));
-	cudaSafeCall(cudaStreamSynchronize(stream));
+//	cudaSafeCall(cudaStreamSynchronize(stream));
 	return (host_failure == 0);
 }
 
@@ -259,7 +259,7 @@ bool hashing::cuckooInsert(
 
 	//Check success or not
 	cudaSafeCall(cudaMemcpyAsync(&host_failure, d_failure, sizeof(unsigned int), cudaMemcpyDeviceToHost, stream));
-	cudaSafeCall(cudaStreamSynchronize(stream));
+//	cudaSafeCall(cudaStreamSynchronize(stream));
 	return (host_failure == 0);
 }
 

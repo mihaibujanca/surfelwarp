@@ -364,11 +364,12 @@ surfelwarp::DeviceArrayView<float> surfelwarp::BlockPCG<BlockDim>::SolveConverge
 
         //Check converge
         cudaSafeCall(cudaMemcpyAsync(delta_pagelock_, delta_new_, sizeof(float), cudaMemcpyDeviceToHost, m_stream));
-        cudaSafeCall(cudaStreamSynchronize(m_stream));
+//        cudaSafeCall(cudaStreamSynchronize(m_stream));
         if(std::abs(*delta_pagelock_) < eps_square * std::abs(*delta_0_pagelock_)) {
             break;
         }
     }
+//    cudaSafeCall(cudaStreamSynchronize(m_stream));
 
     return x_.ArrayView();
 }

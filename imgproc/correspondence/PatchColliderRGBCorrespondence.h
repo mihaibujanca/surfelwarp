@@ -26,9 +26,9 @@ namespace surfelwarp {
 			patch_clip = patch_radius,
 			feature_dim = 18,
 			num_trees = 5,
-			max_search_level = 16,
-			patch_stride = 2,
-			max_num_correspondence = 40000
+			max_search_level = 10,
+			patch_stride = 4,
+			max_num_correspondence = 20000
 		};
 		
 	private:
@@ -58,7 +58,7 @@ namespace surfelwarp {
 		//The buffer for compact the candidate buffer
 		PrefixSum m_prefixsum;
 		unsigned* m_candidate_size_pagelock;
-		
+		bool first_frame, swap;
 		//The buffer and array for corresponded pixels
 		DeviceBufferArray<ushort4> m_correspondence_pixels;
 	public:

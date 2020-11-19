@@ -146,7 +146,7 @@ bool hashing::CompactProbeTable::Insert(
 
 	//Sync before read the memory
 	cudaSafeCall(cudaMemcpyAsync(m_failure_host, m_failure_dev, sizeof(unsigned), cudaMemcpyDeviceToHost, stream));
-	cudaSafeCall(cudaStreamSynchronize(stream));
+//	cudaSafeCall(cudaStreamSynchronize(stream));
 	return ((*m_failure_host) == 0);
 }
 

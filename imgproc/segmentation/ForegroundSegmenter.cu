@@ -70,8 +70,10 @@ namespace surfelwarp { namespace device {
 		const int halfsize = __float2uint_ru(sigma) * 2;
 		float total_weight = 0.0f;
 		float total_value = 0.0f;
+#pragma unroll
 		for(int neighbor_y = y - halfsize; neighbor_y <= y + halfsize; neighbor_y++) {
-			for(int neighbor_x = x - halfsize; neighbor_x <= x + halfsize; neighbor_x++) {
+#pragma unroll
+		    for(int neighbor_x = x - halfsize; neighbor_x <= x + halfsize; neighbor_x++) {
 				//Retrieve the mask value at neigbour
 				const unsigned char neighbor_foreground = tex2D<unsigned char>(foreground_mask, neighbor_x, neighbor_y);
 

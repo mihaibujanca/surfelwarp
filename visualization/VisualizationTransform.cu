@@ -122,8 +122,10 @@ void surfelwarp::Visualizer::MarkValidIndexMapValue(
 	);
 
 	//Always sync and check error
-	cudaSafeCall(cudaDeviceSynchronize());
+#if defined(CUDA_DEBUG_SYNC_CHECK)
+    cudaSafeCall(cudaDeviceSynchronize());
 	cudaSafeCall(cudaGetLastError());
+#endif
 }
 
 

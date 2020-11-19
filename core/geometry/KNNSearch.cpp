@@ -88,15 +88,17 @@ void surfelwarp::KNNSearch::CheckApproximateKNNSearch(
 			for(auto j = 0; j < 4; j++) {
 				if(gpu_knn_flat[j] == cpu_value)
 					gpu_knn_found[j] = true;
-			}
+				else
+                    LOG(INFO) << "The KNN is not found in first " << exact_knn_margin << " exact KNN";
+            }
 		}
 		
 		//Check it
-		for(auto i = 0; i < 4; i++) {
-			if(!gpu_knn_found[i]) {
-				LOG(INFO) << "The KNN is not found in first " << exact_knn_margin << " exact KNN";
-			}
-		}
+//		for(auto i = 0; i < 4; i++) {
+//			if(!gpu_knn_found[i]) {
+//				LOG(INFO) << "The KNN is not found in first " << exact_knn_margin << " exact KNN";
+//			}
+//		}
 	}
 	
 	LOG(INFO) << "Check done";

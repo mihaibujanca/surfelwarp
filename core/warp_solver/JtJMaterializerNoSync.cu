@@ -265,7 +265,7 @@ namespace surfelwarp { namespace device {
 		for(auto iter = threadIdx.x; iter < jtj_blk_size * num_warps; iter += thread_blk_size) {
 			shared_blks[iter % jtj_blk_size][iter / jtj_blk_size] = 0.0f;
 		}
-		__syncthreads();
+//		__syncthreads();
 
 		
 		for (auto iter = threadIdx.x; iter < padded_term_size; iter += thread_blk_size)

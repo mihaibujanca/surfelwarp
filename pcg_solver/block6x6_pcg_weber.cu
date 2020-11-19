@@ -43,7 +43,7 @@ namespace surfelwarp { namespace device {
 		}
 
 		//Sync here
-		__syncthreads();
+//		__syncthreads();
 
 		//Call the Gaussian inversion
 		float* A_this_thread = &(factored_matrix[36 * threadIdx.x]);
@@ -55,6 +55,7 @@ namespace surfelwarp { namespace device {
 
 		//Cooperative storing
 		float* A_inv_this_blk = A_inversed + blk_matrix_offset;
+#pragma unroll
 		for (auto k = 0; k < 36; k++) { // There are 36 x num_threads float need to be loaded
 			if (blk_matrix_offset + k * num_threads + threadIdx.x < num_matrix * 36)
 				A_inv_this_blk[k * num_threads + threadIdx.x] = inversed_matrix[k * num_threads + threadIdx.x]; //Each thread stores one element
@@ -118,7 +119,7 @@ namespace surfelwarp { namespace device {
 		if (lane_id == 31) warp_dot[warp_id] = scanned_dot;
 
 		//Perform reduct on the warp_dot
-		__syncthreads();
+//		__syncthreads(); MAYBE NEEDED
 		if (warp_id == 0) {
 			float warp_dot_reduce = 0.0f;
 			if (lane_id < num_warps)
@@ -195,7 +196,7 @@ namespace surfelwarp { namespace device {
         if (lane_id == 31) warp_dot[warp_id] = scanned_dot;
 
         //Perform reduct on the warp_dot
-        __syncthreads();
+//		__syncthreads(); MAYBE NEEDED
         if (warp_id == 0) {
             float warp_dot_reduce = 0.0f;
             if (lane_id < num_warps)
@@ -258,7 +259,7 @@ namespace surfelwarp { namespace device {
 		if (lane_id == 31) warp_dot[warp_id] = scanned_dot;
 
 		//Perform reduct on the warp_dot
-		__syncthreads();
+//		__syncthreads(); MAYBE NEEDED
 		if (warp_id == 0) {
 			float warp_dot_reduce = 0.0f;
 			if (lane_id < num_warps)
@@ -339,7 +340,7 @@ namespace surfelwarp { namespace device {
         __shared__ float warp_dot[num_warps];
         if (lane_id == 31) warp_dot[warp_id] = scanned_dot;
 
-        __syncthreads();
+//		__syncthreads(); MAYBE NEEDED
         if (warp_id == 0) {
             float warp_dot_reduce = 0.0f;
             if (lane_id < num_warps) {
@@ -637,7 +638,7 @@ void surfelwarp::checkBlock6x6Init(
     block6x6_init_kernel(b_dev, d_inv_diags, r, s, x);
 
     //Check the value of dot product
-    cudaDeviceSynchronize();
+//    cudaDeviceSynchronize();
     r.download(h_r); s.download(h_s);
     float dot_value = 0;
     for(auto i = 0;i < h_s.size();i++){
@@ -871,9 +872,11 @@ void surfelwarp::checkBlock6x6Kernel_2(
     cudaMemcpyFromSymbol(&nu_old_host, device::nu_old_blk6x6, sizeof(float), 0, cudaMemcpyDeviceToHost);
     cudaMemcpyFromSymbol(parital_reduce, device::reduce_partials_blk6x6,
                          sizeof(float) * max_reduce_blocks, 0, cudaMemcpyDeviceToHost);
-    cudaSafeCall(cudaDeviceSynchronize());
-    cudaSafeCall(cudaGetLastError());
-    float nu_new_host = 0.0f;
+    #if defined(CUDA_DEBUG_SYNC_CHECK)
+        cudaSafeCall(cudaDeviceSynchronize());
+        cudaSafeCall(cudaGetLastError());
+    #endif
+	float nu_new_host = 0.0f;
     for(auto j = 0; j < num_reduce_blocks_6x6; j++) {
         nu_new_host += parital_reduce[j];
     }
@@ -888,9 +891,10 @@ void surfelwarp::checkBlock6x6Kernel_2(
     //Download the nu_new from device
     float nu_new_device;
     cudaMemcpyFromSymbol(&nu_new_device, device::nu_new_blk6x6, sizeof(float), 0, cudaMemcpyDeviceToHost);
-    cudaSafeCall(cudaDeviceSynchronize());
-    cudaSafeCall(cudaGetLastError());
-
+    #if defined(CUDA_DEBUG_SYNC_CHECK)
+        cudaSafeCall(cudaDeviceSynchronize());
+        cudaSafeCall(cudaGetLastError());
+    #endif
     //Check that value: seems correct
     assert(std::abs((nu_new_host - nu_new_device) / nu_new_host) < 1e-4);
 

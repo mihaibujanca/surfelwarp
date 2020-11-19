@@ -79,12 +79,11 @@ surfelwarp::DeviceArrayView<surfelwarp::DepthSurfel> surfelwarp::ImageProcessor:
 ) {
         if(rgb && depth)
         {
-            LoadPrevRGBImageFromOpenCV();
+//            LoadPrevRGBImageFromOpenCV();
             LoadDepthImageFromOpenCV(*depth);
             LoadRGBImageFromOpenCV(*rgb);
         }
-        else
-        {
+        else {
             FetchFrame(frame_idx);
         }
 	UploadDepthImage(stream);
@@ -183,8 +182,10 @@ void surfelwarp::ImageProcessor::allocateFetchBuffer()
 	cudaSafeCall(cudaMallocHost(&m_depth_buffer_pagelock, sizeof(unsigned short) * raw_img_size));
 	cudaSafeCall(cudaMallocHost(&m_rgb_buffer_pagelock, sizeof(uchar4) * raw_img_size));
 	cudaSafeCall(cudaMallocHost(&m_rgb_prev_buffer_pagelock, sizeof(uchar4) * raw_img_size));
-	cudaSafeCall(cudaDeviceSynchronize());
+#if defined(CUDA_DEBUG_SYNC_CHECK)
+    cudaSafeCall(cudaDeviceSynchronize());
 	cudaSafeCall(cudaGetLastError());
+#endif
 
 	//Construct the opencv matrix
 	m_depth_img = cv::Mat(cv::Size(m_raw_img_cols, m_raw_img_rows), CV_16UC1);
@@ -197,15 +198,27 @@ void surfelwarp::ImageProcessor::releaseFetchBuffer()
 	cudaSafeCall(cudaFreeHost(m_depth_buffer_pagelock));
 	cudaSafeCall(cudaFreeHost(m_rgb_buffer_pagelock));
 	cudaSafeCall(cudaFreeHost(m_rgb_prev_buffer_pagelock));
-	cudaSafeCall(cudaDeviceSynchronize());
+#if defined(CUDA_DEBUG_SYNC_CHECK)
+    cudaSafeCall(cudaDeviceSynchronize());
 	cudaSafeCall(cudaGetLastError());
+#endif
 }
 
 void surfelwarp::ImageProcessor::FetchFrame(size_t frame_idx)
 {
+    m_rgb_img_stored = m_rgb_img;
+
     FetchDepthImage(frame_idx);
     FetchRGBImage(frame_idx);
-    FetchRGBPrevFrame(frame_idx);
+    if(frame_idx == ConfigParser::Instance().start_frame_idx())
+        m_rgb_img_prev = m_rgb_img;
+    else
+        m_rgb_img_prev = m_rgb_img_stored;
+
+    memcpy(m_rgb_prev_buffer_pagelock, m_rgb_img_prev.data,
+           sizeof(uchar3) * m_raw_img_rows * m_raw_img_cols
+    );
+//    FetchRGBPrevFrame(frame_idx);
 }
 
 void surfelwarp::ImageProcessor::FetchDepthImage(size_t frame_idx)
@@ -483,13 +496,12 @@ void surfelwarp::ImageProcessor::releaseColorTimeTexture()
 	releaseTextureCollect(m_color_time_collect);
 }
 
-void surfelwarp::ImageProcessor::BuildColorTimeTexture(size_t frame_idx ,cudaStream_t stream)
+void surfelwarp::ImageProcessor::BuildColorTimeTexture(size_t frame_idx, cudaStream_t stream)
 {
-	const float init_time = float(frame_idx);
 	createColorTimeMap(
 		m_raw_rgb_buffer, 
-		m_clip_img_rows, m_clip_img_cols, 
-		init_time, 
+		m_clip_img_rows, m_clip_img_cols,
+        (const float)frame_idx,
 		m_color_time_collect.surface, 
 		stream
 	);

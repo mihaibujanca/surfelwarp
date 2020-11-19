@@ -58,7 +58,8 @@ void surfelwarp::ApplyJtJHandlerMatrixFree::updateScalarJtJDotXDirect(
 	term2jacobian.twist_gradient_array.Download(twist_gradient_array);
 	
 	//Iterate over terms
-	for(auto i = 0; i < knn_array.size(); i++) {
+#pragma unroll
+    for(auto i = 0; i < knn_array.size(); i++) {
 		const ushort4 term_knn = knn_array[i];
 		const float4 term_knn_weight = knn_weight_array[i];
 		const TwistGradientOfScalarCost term_twist_gradient = twist_gradient_array[i];

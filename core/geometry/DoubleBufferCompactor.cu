@@ -174,7 +174,7 @@ void surfelwarp::DoubleBufferCompactor::PerformCompactionGeometryKNNSync(
 	} else {
 		num_valid_append_surfels = 0;
 	}
-	cudaSafeCall(cudaStreamSynchronize(stream));
+//	cudaSafeCall(cudaStreamSynchronize(stream));
 	
 	//And set the size of output geometry
 	m_compact_to_geometry->ResizeValidSurfelArrays(num_valid_append_surfels + num_valid_remaining_surfels);
@@ -232,7 +232,7 @@ void surfelwarp::DoubleBufferCompactor::PerformComapctionGeometryOnlySync(
 		cudaMemcpyDeviceToHost,
 		stream
 	));
-	cudaSafeCall(cudaStreamSynchronize(stream));
+//	cudaSafeCall(cudaStreamSynchronize(stream)); MAYBE NEEDED
 	
 	//And set the size of output geometry
 	m_compact_to_geometry->ResizeValidSurfelArrays(num_valid_append_surfels + num_valid_remaining_surfels);

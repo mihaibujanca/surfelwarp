@@ -45,7 +45,7 @@ void surfelwarp::JtJMaterializer::SetInputs(
 
 void surfelwarp::JtJMaterializer::BuildMaterializedJtJNondiagonalBlocks(cudaStream_t stream) {
 	computeNonDiagonalBlocks(stream);
-	//computeNonDiagonalBlocksNoSync(stream);
+//	computeNonDiagonalBlocksNoSync(stream);
 
 	//TODO: instead of leaving dead code, either change this function w/ optional argument/flag check or
 	// use a separate set of functions / child class w/ overriding member functions for performance measurement

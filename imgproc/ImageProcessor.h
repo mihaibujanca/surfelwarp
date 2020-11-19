@@ -72,7 +72,7 @@ namespace surfelwarp {
         FetchInterface::Ptr m_image_fetcher;
 
         //The opencv matrix and the underline memory for image fetching
-        cv::Mat m_depth_img, m_rgb_img, m_rgb_img_prev;
+        cv::Mat m_depth_img, m_rgb_img, m_rgb_img_prev, m_rgb_img_stored;
         void* m_depth_buffer_pagelock;
         void* m_rgb_buffer_pagelock;
 		void* m_rgb_prev_buffer_pagelock;

@@ -1,13 +1,12 @@
 #pragma once
 #include "common/color_transfer.h"
 #include "imgproc/correspondence/gpc_feature.h"
-
-template<int PatchHalfSize=10>
+template<int PatchHalfSize>
 __device__ __forceinline__
 void surfelwarp::buildDCTPatchFeature(
 	cudaTextureObject_t normalized_rgb, 
 	int center_x, int center_y, 
-	GPCPatchFeature<18>& feature
+	GPCPatchFeature<surfelwarp::PatchColliderRGBCorrespondence::Parameters::feature_dim>& feature
 ) {
 	const float pi = 3.1415926f;
 	const int left_x = center_x - PatchHalfSize;

@@ -1,6 +1,7 @@
 file(GLOB VISUAL_SRC *.h *.cpp *.cu)
 source_group("src" FILES ${VISUAL_SRC})
-cuda_add_library(visualization_lib ${VISUAL_SRC})
+cuda_add_library(visualization_lib STATIC ${VISUAL_SRC})
+#cuda_add_library(visualization_lib ${VISUAL_SRC})
 target_link_libraries(visualization_lib ${OpenCV_LIBS})
 target_link_libraries(visualization_lib ${PCL_LIBRARIES})
 target_link_libraries(visualization_lib common_lib)

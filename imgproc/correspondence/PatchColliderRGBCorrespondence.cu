@@ -20,6 +20,7 @@ namespace surfelwarp { namespace device {
 		const typename PatchColliderForest<FeatureDim, NumTrees>::GPCForestDevice& forest
 	) {
 		unsigned hash = 0;
+#pragma unroll
 		for(auto i = 0; i < NumTrees; i++) {
 			const GPCTree<FeatureDim>& tree = forest.trees[i];
 			const unsigned leaf = tree.leafForPatch(feature);
@@ -33,7 +34,7 @@ namespace surfelwarp { namespace device {
 		unsigned encoded = rgb_x + 1024 * rgb_y;
 		if(img_0) {
 			encoded = encoded & (~(1 << 31));
-		} 
+		}
 		else {
 			encoded = encoded | (1 << 31);
 		}
@@ -42,14 +43,14 @@ namespace surfelwarp { namespace device {
 
 	__host__ __device__ __forceinline__
 	void decode_pixel_impair(
-		unsigned encoded, 
-		int& rgb_x, int& rgb_y, 
+		unsigned encoded,
+		int& rgb_x, int& rgb_y,
 		bool& img_0
 	) {
 		//Check where this pixel is from
 		if ((encoded & (1 << 31)) != 0) {
 			img_0 = false;
-		} 
+		}
 		else {
 			img_0 = true;
 		}
@@ -59,11 +60,11 @@ namespace surfelwarp { namespace device {
 		rgb_x = encoded % 1024;
 		rgb_y = encoded / 1024;
 	}
-	
+
 	template<int PatchHalfSize, int NumTrees>
 	__global__ void buildColliderKeyValueKernel(
 		cudaTextureObject_t rgb_0, cudaTextureObject_t rgb_1,
-		const typename PatchColliderForest<18, NumTrees>::GPCForestDevice forest,
+		const typename PatchColliderForest<PatchColliderRGBCorrespondence::Parameters::feature_dim, NumTrees>::GPCForestDevice forest,
 		const int stride, const int kv_rows, const int kv_cols,
 		unsigned* keys, unsigned* values
 	) {
@@ -76,13 +77,13 @@ namespace surfelwarp { namespace device {
 		const auto rgb_center_y = PatchHalfSize + kv_y * stride;
 
 		//Build the feature
-		GPCPatchFeature<18> patch_feature_0, patch_feature_1;
+		GPCPatchFeature<PatchColliderRGBCorrespondence::Parameters::feature_dim> patch_feature_0, patch_feature_1;
 		buildDCTPatchFeature<PatchHalfSize>(rgb_0, rgb_center_x, rgb_center_y, patch_feature_0);
 		buildDCTPatchFeature<PatchHalfSize>(rgb_1, rgb_center_x, rgb_center_y, patch_feature_1);
 
 		//Search it for the key
-		const unsigned key_0 = searchGPCForest<18, NumTrees>(patch_feature_0, forest);
-		const unsigned key_1 = searchGPCForest<18, NumTrees>(patch_feature_1, forest);
+		const unsigned key_0 = searchGPCForest<PatchColliderRGBCorrespondence::Parameters::feature_dim, NumTrees>(patch_feature_0, forest);
+		const unsigned key_1 = searchGPCForest<PatchColliderRGBCorrespondence::Parameters::feature_dim, NumTrees>(patch_feature_1, forest);
 
 		//Build the value
 		const unsigned value_0 = encode_pixel_impair(rgb_center_x, rgb_center_y, true);
@@ -94,6 +95,39 @@ namespace surfelwarp { namespace device {
 		keys[offset + 1] = key_1;
 		values[offset + 0] = value_0;
 		values[offset + 1] = value_1;
+	}
+
+
+	template<int PatchHalfSize, int NumTrees>
+	__global__ void buildColliderKeyValueKernel(
+		cudaTextureObject_t new_rgb, bool swap,
+		const typename PatchColliderForest<PatchColliderRGBCorrespondence::Parameters::feature_dim, NumTrees>::GPCForestDevice forest,
+		const int stride, const int kv_rows, const int kv_cols,
+		unsigned* keys, unsigned* values
+	) {
+		const auto kv_x = threadIdx.x + blockDim.x * blockIdx.x;
+		const auto kv_y = threadIdx.y + blockDim.y * blockIdx.y;
+		if(kv_x >= kv_cols || kv_y >= kv_rows) return;
+
+		//Transfer to the center of rgb image
+		const auto rgb_center_x = PatchHalfSize + kv_x * stride;
+		const auto rgb_center_y = PatchHalfSize + kv_y * stride;
+
+		//Build the feature
+		GPCPatchFeature<PatchColliderRGBCorrespondence::Parameters::feature_dim> patch_feature;
+		buildDCTPatchFeature<PatchHalfSize>(new_rgb, rgb_center_x, rgb_center_y, patch_feature);
+
+		//Search it for the key
+		const unsigned key = searchGPCForest<PatchColliderRGBCorrespondence::Parameters::feature_dim, NumTrees>(patch_feature, forest);
+
+		//Build the value
+		const unsigned value = encode_pixel_impair(rgb_center_x, rgb_center_y, swap);
+
+		//Store it
+		const auto offset = swap ? 2 * (kv_x + kv_cols * kv_y) : 2 * (kv_x + kv_cols * kv_y) + 1;
+
+		keys[offset] = key;
+		values[offset] = value;
 	}
 
 
@@ -113,18 +147,18 @@ namespace surfelwarp { namespace device {
 		if(idx == 0 || sorted_treeleaf_key[idx] != sorted_treeleaf_key[idx - 1]) {
 			//Read the value
 			const auto hashed_key = sorted_treeleaf_key[idx];
-			
+
 			//Count the number of matching
 			int num_pixels_keys = 1;
 
 			//The end of probing
 			auto end = idx + 2;
-			if(end >= sorted_treeleaf_key.size) 
+			if(end >= sorted_treeleaf_key.size)
 				end = sorted_treeleaf_key.size - 1;
-			
+
 			//Probe the next
 			for(int j = idx + 1; j <= end; j++) {
-				if(sorted_treeleaf_key[j] == hashed_key) 
+				if(sorted_treeleaf_key[j] == hashed_key)
 					num_pixels_keys++;
 			}
 
@@ -143,11 +177,11 @@ namespace surfelwarp { namespace device {
 					//Determine which one is for image 1
 					if(!pixel0_img0) {
 						decode_pixel_impair(encoded_pixel_0, x, y, pixel0_img0);
-					} 
+					}
 					else {
 						decode_pixel_impair(encoded_pixel_1, x, y, pixel1_img0);
 					}
-					
+
 					//Check if this is foreground
 					const unsigned char is_foreground = tex2D<unsigned char>(foreground_1, x, y);
 					if(is_foreground != 0)
@@ -186,7 +220,7 @@ namespace surfelwarp { namespace device {
 			if(img_0) {
 				pixel_pair.x = x;
 				pixel_pair.y = y;
-			} 
+			}
 			else {
 				pixel_pair.z = x;
 				pixel_pair.w = y;
@@ -196,12 +230,12 @@ namespace surfelwarp { namespace device {
 			if(img_0) {
 				pixel_pair.x = x;
 				pixel_pair.y = y;
-			} 
+			}
 			else {
 				pixel_pair.z = x;
 				pixel_pair.w = y;
 			}
-			
+
 			//Write it
 			const auto offset = prefixsum_indicator[idx] - 1;
 			pixel_pair_array[offset] = pixel_pair;
@@ -214,6 +248,7 @@ namespace surfelwarp { namespace device {
 surfelwarp::PatchColliderRGBCorrespondence::PatchColliderRGBCorrespondence()
 {
 	m_rgb_cols = m_rgb_rows = 0;
+	first_frame = true; swap = true;
 }
 
 void surfelwarp::PatchColliderRGBCorrespondence::AllocateBuffer(unsigned img_rows, unsigned img_cols)
@@ -236,7 +271,7 @@ void surfelwarp::PatchColliderRGBCorrespondence::AllocateBuffer(unsigned img_row
 
 	//Allocate the key-value buffer
 	const auto kv_size = m_kvmap_rows * m_kvmap_rows;
-	
+
 	//Both rgb_0 and rgb_1 will have key-value pairs
 	m_treeleaf_key.create(2 * kv_size);
 	m_pixel_value.create(2 * kv_size);
@@ -244,7 +279,7 @@ void surfelwarp::PatchColliderRGBCorrespondence::AllocateBuffer(unsigned img_row
 
 	//The buffer for marking the valid indicator
 	m_candidate_pixelpair_indicator.create(2 * kv_size);
-	
+
 	//The buffer for prefixsum and compaction
 	m_prefixsum.AllocateBuffer(m_candidate_pixelpair_indicator.size());
 	cudaSafeCall(cudaMallocHost((void**)(&m_candidate_size_pagelock), sizeof(unsigned)));
@@ -258,17 +293,17 @@ void surfelwarp::PatchColliderRGBCorrespondence::ReleaseBuffer()
 	//Clear the key-value pair
 	m_treeleaf_key.release();
 	m_pixel_value.release();
-	
+
 	//Clear the indicator
 	m_candidate_pixelpair_indicator.release();
-	
+
 	//Clear the pagelock memory
 	cudaSafeCall(cudaFreeHost(m_candidate_size_pagelock));
 }
 
 void surfelwarp::PatchColliderRGBCorrespondence::SetInputImages(
 	cudaTextureObject_t rgb_0,
-	cudaTextureObject_t rgb_1, 
+	cudaTextureObject_t rgb_1,
 	cudaTextureObject_t foreground_1
 ) {
 	rgb_0_ = rgb_0;
@@ -277,7 +312,7 @@ void surfelwarp::PatchColliderRGBCorrespondence::SetInputImages(
 }
 
 void surfelwarp::PatchColliderRGBCorrespondence::SetInputImages(
-	cudaTextureObject_t rgb_0, cudaTextureObject_t rgb_1, 
+	cudaTextureObject_t rgb_0, cudaTextureObject_t rgb_1,
 	cudaTextureObject_t depth_0, cudaTextureObject_t depth_1
 ) {
 	throw new std::runtime_error("This version of patch collider only accept rgb images");
@@ -288,34 +323,43 @@ void surfelwarp::PatchColliderRGBCorrespondence::FindCorrespondence(cudaStream_t
 	dim3 kv_blk(8, 8);
 	dim3 kv_grid(divUp(m_kvmap_cols, kv_blk.x), divUp(m_kvmap_rows, kv_blk.y));
 	const auto forest_dev = m_forest.OnDevice();
-	device::buildColliderKeyValueKernel<patch_radius, num_trees><<<kv_grid, kv_blk, 0, stream>>>(
-		rgb_0_, rgb_1_, 
-		forest_dev, 
-		patch_stride, 
-		m_kvmap_rows, m_kvmap_cols,
-		m_treeleaf_key.ptr(),
-		m_pixel_value.ptr()
-	);
-	
+	if(first_frame)
+        device::buildColliderKeyValueKernel<patch_radius, num_trees><<<kv_grid, kv_blk, 0, stream>>>(
+            rgb_0_, rgb_1_,
+            forest_dev,
+            patch_stride,
+            m_kvmap_rows, m_kvmap_cols,
+            m_treeleaf_key.ptr(),
+            m_pixel_value.ptr()
+        );
+	else
+        device::buildColliderKeyValueKernel<patch_radius, num_trees><<<kv_grid, kv_blk, 0, stream>>>(
+                rgb_1_, swap,
+                forest_dev,
+                patch_stride,
+                m_kvmap_rows, m_kvmap_cols,
+                m_treeleaf_key.ptr(),
+                m_pixel_value.ptr()
+        );
 	//Sort it
 	m_collide_sort.Sort(m_treeleaf_key, m_pixel_value, stream);
 
 	//Debug code
 	//std::cout << "The number of unique elments " << numUniqueElement(m_treeleaf_key, 0xffffffffu) << std::endl;
-	
+
 	//Mark of candidate
 	dim3 indicator_blk(64);
 	dim3 indicator_grid(divUp(m_collide_sort.valid_sorted_key.size(), indicator_blk.x));
 	device::markCorrespondenceCandidateKernel<<<indicator_grid, indicator_blk, 0, stream>>>(
-		m_collide_sort.valid_sorted_key, 
-		m_collide_sort.valid_sorted_value, 
+		m_collide_sort.valid_sorted_key,
+		m_collide_sort.valid_sorted_value,
 		m_foreground_1,
 		m_candidate_pixelpair_indicator.ptr()
 	);
-	
+
 	//Do a prefix-sum
 	m_prefixsum.InclusiveSum(m_candidate_pixelpair_indicator, stream);
-	
+
 	//Get the size of sum
 	cudaSafeCall(cudaMemcpyAsync(
 		m_candidate_size_pagelock,
@@ -324,19 +368,20 @@ void surfelwarp::PatchColliderRGBCorrespondence::FindCorrespondence(cudaStream_t
 		cudaMemcpyDeviceToHost,
 		stream
 	));
-	
+
 	//Invoke the collection kernel
 	device::collectCandidatePixelPairKernel<<<indicator_grid, indicator_blk, 0, stream>>>(
-		m_candidate_pixelpair_indicator, 
-		m_collide_sort.valid_sorted_value.ptr(), 
+		m_candidate_pixelpair_indicator,
+		m_collide_sort.valid_sorted_value.ptr(),
 		m_prefixsum.valid_prefixsum_array.ptr(),
 		m_correspondence_pixels.Ptr()
 	);
-	
-	//Construct the output
-	cudaSafeCall(cudaStreamSynchronize(stream));
-	m_correspondence_pixels.ResizeArrayOrException(*m_candidate_size_pagelock);
 
+	//Construct the output
+//	cudaSafeCall(cudaStreamSynchronize(stream));
+	m_correspondence_pixels.ResizeArrayOrException(*m_candidate_size_pagelock);
+    first_frame = false;
+    swap = !swap;
 	//Debug
 	//std::cout << "The number of candidate array is " << m_valid_correspondence_array.size() << std::endl;
 

@@ -1,28 +1,28 @@
 #include "imgproc/ImageProcessor.h"
-
+#include <cuda_profiler_api.h>
 void surfelwarp::ImageProcessor::initProcessorStream() {
 	//Create the stream
 	cudaSafeCall(cudaStreamCreate(&m_processor_stream[0]));
 	cudaSafeCall(cudaStreamCreate(&m_processor_stream[1]));
-	cudaSafeCall(cudaStreamCreate(&m_processor_stream[2]));
+//	cudaSafeCall(cudaStreamCreate(&m_processor_stream[2]));
 }
 
 void surfelwarp::ImageProcessor::releaseProcessorStream() {
 	//Destroy these streams
 	cudaSafeCall(cudaStreamDestroy(m_processor_stream[0]));
 	cudaSafeCall(cudaStreamDestroy(m_processor_stream[1]));
-	cudaSafeCall(cudaStreamDestroy(m_processor_stream[2]));
+//	cudaSafeCall(cudaStreamDestroy(m_processor_stream[2]));
 
 	//Assign to null value
 	m_processor_stream[0] = 0;
 	m_processor_stream[1] = 0;
-	m_processor_stream[2] = 0;
+//	m_processor_stream[2] = 0;
 }
 
 void surfelwarp::ImageProcessor::syncAllProcessorStream() {
 	cudaSafeCall(cudaStreamSynchronize(m_processor_stream[0]));
 	cudaSafeCall(cudaStreamSynchronize(m_processor_stream[1]));
-	cudaSafeCall(cudaStreamSynchronize(m_processor_stream[2]));
+//	cudaSafeCall(cudaStreamSynchronize(m_processor_stream[2]));
 }
 
 void surfelwarp::ImageProcessor::ProcessFrameStreamed(CameraObservation & observation, size_t frame_idx, const cv::Mat* rgb, const cv::Mat* depth) {
@@ -33,7 +33,7 @@ void surfelwarp::ImageProcessor::ProcessFrameStreamed(CameraObservation & observ
     } else {
         FetchFrame(frame_idx);
     }
-        UploadDepthImage(m_processor_stream[0]);
+    UploadDepthImage(m_processor_stream[0]);
 	UploadRawRGBImage(m_processor_stream[0]);
 
 	//This seems cause some problem ,disable it at first
@@ -48,19 +48,20 @@ void surfelwarp::ImageProcessor::ProcessFrameStreamed(CameraObservation & observ
 	BuildColorTimeTexture(frame_idx, m_processor_stream[0]);
 
 	//Sync here
-	cudaSafeCall(cudaStreamSynchronize(m_processor_stream[0]));
+//	cudaSafeCall(cudaStreamSynchronize(m_processor_stream[0]));
 
 	//Invoke other expensive computations
-        // TODO: make sure segmentation on Jetson is bound to m_processor_stream[0]
-	SegmentForeground(frame_idx, m_processor_stream[0]); //This doesn't block, even for hashing based method
-	FindCorrespondence(m_processor_stream[1]); //This will block, thus sync inside
+    // TODO: make sure segmentation on Jetson is bound to m_processor_stream[0]
+    SegmentForeground(frame_idx, m_processor_stream[0]); //This doesn't block, even for hashing based method
+    ComputeGradientMap(m_processor_stream[0]);
+    FindCorrespondence(m_processor_stream[1]); //This will block, thus sync inside
 
 	//The gradient map depends on filtered mask
-	cudaSafeCall(cudaStreamSynchronize(m_processor_stream[0]));
-	ComputeGradientMap(m_processor_stream[0]);
+//	cudaSafeCall(cudaStreamSynchronize(m_processor_stream[0]));
 
 	//Sync and output
-	syncAllProcessorStream();
+    cudaSafeCall(cudaStreamSynchronize(m_processor_stream[0]));
+//	syncAllProcessorStream();
 	memset(&observation, 0, sizeof(observation));
 
 	//The raw depth image for visualization

@@ -41,6 +41,7 @@ void surfelwarp::ConfigParser::ParseConfig(const std::string & config_path) {
 	loadCameraIntrinsicFromJson((const void*)&config_json);
 	loadPenaltyConfigFromJson((const void*)&config_json);
 	loadFrameSkipFromJson((const void*)&config_json);
+    loadSolveRigidFromJson((const void*)&config_json);
 
 //        if(input_file.is_open())
 //            input_file.close();
@@ -167,7 +168,7 @@ int surfelwarp::ConfigParser::num_frames() const {
 	return m_num_frames;
 }
 
-//The query about frame
+// Frame skipping
 void surfelwarp::ConfigParser::setDefaultFrameSkip() {
     m_frame_skip = 0;
 }
@@ -198,6 +199,40 @@ void surfelwarp::ConfigParser::loadFrameSkipFromJson(const void * json_ptr) {
 int surfelwarp::ConfigParser::frame_skip() const {
     return m_frame_skip;
 }
+
+
+// Frame skipping
+void surfelwarp::ConfigParser::setDefaultSolveRigid() {
+    m_solve_rigid = true;
+}
+
+void surfelwarp::ConfigParser::saveSolveRigidToJson(void * json_ptr) const {
+    //Recovery the json type
+    using json = nlohmann::json;
+    auto& config_json = *((json*)json_ptr);
+
+    //Save it
+    config_json["solve_rigid"] = m_solve_rigid;
+}
+
+void surfelwarp::ConfigParser::loadSolveRigidFromJson(const void * json_ptr) {
+    //Recovery the json type
+    using json = nlohmann::json;
+    const auto& config_json = *((const json*)json_ptr);
+
+    //Load it, these parameter are not required
+    //but implemented as required for debug
+    SURFELWARP_CHECK(config_json.find("solve_rigid") != config_json.end());
+
+    //load it
+    m_solve_rigid = config_json["solve_rigid"];
+}
+
+
+bool surfelwarp::ConfigParser::solve_rigid() const {
+    return m_solve_rigid;
+}
+
 //The method about peroids
 void surfelwarp::ConfigParser::setDefaultPeroidsValue() {
 	m_use_periodic_reinit = false;

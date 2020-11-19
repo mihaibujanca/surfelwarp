@@ -139,7 +139,7 @@ void surfelwarp::WarpFieldExtender::syncQueryUncoveredNodeCandidateSize(
 	));
 	
 	//Sync and check the size
-	cudaSafeCall(cudaStreamSynchronize(stream));
+//	cudaSafeCall(cudaStreamSynchronize(stream));
 	m_candidate_vertex_array.ResizeArrayOrException(candidate_size);
 	if(candidate_size != 0)
 		m_candidate_vertex_array.SynchronizeToHost(stream, true);

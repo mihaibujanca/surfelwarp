@@ -68,18 +68,13 @@ namespace surfelwarp {
 			unsigned node_idx = 0, prev_idx = 0;
 
 			//the main search loop is bounded by the depth
+#pragma unroll
 			for(auto i = 0; i < max_level; i++) {
 				prev_idx = node_idx;
 				//Load the node, this goona be expensive
 				const GPCNode<FeatureDim>& node = nodes[node_idx];
 				
-				//Determine the next position
-				if(node.dot(patch_feature) < node.boundary) {
-					node_idx = node.right_child;
-				} 
-				else {
-					node_idx = node.left_child;
-				}
+                node_idx = node.dot(patch_feature) < node.boundary ? node.right_child : node.left_child;
 
 				//Check if break
 				if(node_idx == 0 || node_idx >= num_nodes) break;

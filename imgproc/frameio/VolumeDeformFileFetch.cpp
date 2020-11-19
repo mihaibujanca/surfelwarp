@@ -46,8 +46,6 @@ boost::filesystem::path surfelwarp::VolumeDeformFileFetch::FileNameVolumeDeform(
 	return file_path;
 }
 
-
-
 boost::filesystem::path surfelwarp::VolumeDeformFileFetch::FileNameSurfelWarp(size_t frame_idx, bool is_depth_img) const {
 	return FileNameVolumeDeform(frame_idx, is_depth_img);
 }

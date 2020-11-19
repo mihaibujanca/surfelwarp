@@ -47,6 +47,8 @@ void surfelwarp::SurfelGeometry::AddSE3ToVertexAndNormalDebug(const mat34 & se3)
 		m_live_normal_radius.Ptr()
 	);
 
-	cudaSafeCall(cudaDeviceSynchronize());
+#if defined(CUDA_DEBUG_SYNC_CHECK)
+    cudaSafeCall(cudaDeviceSynchronize());
 	cudaSafeCall(cudaGetLastError());
+#endif
 }

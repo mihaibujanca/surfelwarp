@@ -2,6 +2,7 @@
 // Created by wei on 5/29/18.
 //
 #include "common/ConfigParser.h"
+#include "imgproc/frameio/FetchInterface.h"
 #include "imgproc/frameio/VolumeDeformFileFetch.h"
 #include "imgproc/ImageProcessor.h"
 #include "visualization/Visualizer.h"
@@ -34,11 +35,11 @@ int main() {
 #endif
 	
 	//Parse it
-	boost::filesystem::path config_path = config_path_prefix / "boxing_config.json";
+//	boost::filesystem::path config_path = config_path_prefix / "boxing_config.json";
+	boost::filesystem::path config_path = "/home/mihai/Projects/surfelwarp/test_data/boxing_config.json";
 	auto& config = ConfigParser::Instance();
 	config.ParseConfig(config_path.string());
-	
-	
+
 	const auto start_frame_idx = config.start_frame_idx();
 	
 	//Create the data dir
@@ -48,16 +49,16 @@ int main() {
 	}
 	
 	//First test fetching
-	FileFetch::Ptr fetcher = std::make_shared<FileFetch>(config.data_path());
+    FetchInterface::Ptr fetcher = std::make_shared<VolumeDeformFileFetch>(config.data_path());
 	ImageProcessor::Ptr processor = std::make_shared<ImageProcessor>(fetcher);
 	
 	//From the first frame
-	for(auto i = 1; i < 301; i++) {
+	for(auto i = 1; i < config.num_frames(); i++) {
 		LOG(INFO) << "The frame " << i;
 		CameraObservation observation;
 		//processor->ProcessFrameSerial(observation, i + start_frame_idx);
 		processor->ProcessFrameStreamed(observation, i + start_frame_idx);
-		//saveProcessedImage(observation, data_dir, i + start_frame_idx);
+		saveProcessedImage(observation, data_dir, i + start_frame_idx);
 		//Visualizer::DrawRawSegmentMask(observation.foreground_mask);
 	}
 }

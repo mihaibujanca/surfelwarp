@@ -252,7 +252,7 @@ void surfelwarp::NodePair2TermsIndex::QueryValidNodePairSize(cudaStream_t stream
 	const unsigned* num_unique_pair_dev = m_segment_label_prefixsum.valid_prefixsum_array.ptr() + (m_segment_label_prefixsum.valid_prefixsum_array.size() - 1);
 	unsigned num_unique_pair;
 	cudaSafeCall(cudaMemcpyAsync(&num_unique_pair, num_unique_pair_dev, sizeof(unsigned), cudaMemcpyDeviceToHost, stream));
-	cudaSafeCall(cudaStreamSynchronize(stream));
+//	cudaSafeCall(cudaStreamSynchronize(stream));
 	
 	//Correct the size
 	m_half_nodepair_keys.ResizeArrayOrException(num_unique_pair);

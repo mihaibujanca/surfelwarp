@@ -68,6 +68,7 @@ namespace surfelwarp { namespace device {
 						  + 2 * (node_idx == knn.z)
 						  + 3 * (node_idx == knn.w);
 		const float this_weight = ((const float*)(&knn_weight))[offset];
+#pragma unroll
 		for(auto i = 0; i < jt_dot_blk_size; i++) {
 			//Note that the residual do not need to be augment, only jacobian should be multiplied with weight
 			jt_residual[i] *= this_weight;

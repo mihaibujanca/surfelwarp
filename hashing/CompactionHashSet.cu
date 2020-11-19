@@ -72,8 +72,10 @@ void hashing::CompactionHashSet::AllocateBuffer(const unsigned max_unique_keys, 
 	cudaMalloc((void**)&m_temp_storage, m_temp_storage_bytes);
 
 	//Check allocate error
-	cudaSafeCall(cudaDeviceSynchronize());
+#if defined(CUDA_DEBUG_SYNC_CHECK)
+    cudaSafeCall(cudaDeviceSynchronize());
 	cudaSafeCall(cudaGetLastError());
+#endif
 }
 
 void hashing::CompactionHashSet::ReleaseBuffer()
@@ -83,8 +85,10 @@ void hashing::CompactionHashSet::ReleaseBuffer()
 	cudaFree(m_temp_storage);
 	cudaFree(m_valid_indicator);
 	//Check free error
-	cudaSafeCall(cudaDeviceSynchronize());
+#if defined(CUDA_DEBUG_SYNC_CHECK)
+    cudaSafeCall(cudaDeviceSynchronize());
 	cudaSafeCall(cudaGetLastError());
+#endif
 	table_size = 0;
 	m_temp_storage_bytes = 0;
 }

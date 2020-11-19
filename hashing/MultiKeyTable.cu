@@ -144,8 +144,10 @@ void hashing::MultiKeyTable::AllocateBuffer(const unsigned int max_entries, cuda
 	//Allocate the compacted buffer
 	cudaMalloc((void**)(&m_compacted_key_buffer), max_entries * sizeof(unsigned int));
 	cudaMalloc((void**)(&m_compacted_value_buffer), max_entries * sizeof(unsigned int));
-	cudaSafeCall(cudaDeviceSynchronize());
+#if defined(CUDA_DEBUG_SYNC_CHECK)
+    cudaSafeCall(cudaDeviceSynchronize());
 	cudaSafeCall(cudaGetLastError());
+#endif
 
     //Reset the table
     ResetTable(stream);
@@ -173,8 +175,10 @@ void hashing::MultiKeyTable::ReleaseBuffer() {
 
 	cudaFree(m_compacted_key_buffer);
 	cudaFree(m_compacted_value_buffer);
-	cudaSafeCall(cudaDeviceSynchronize());
+#if defined(CUDA_DEBUG_SYNC_CHECK)
+    cudaSafeCall(cudaDeviceSynchronize());
 	cudaSafeCall(cudaGetLastError());
+#endif
 }
 
 void hashing::MultiKeyTable::ResetTable(cudaStream_t stream) {
@@ -228,7 +232,7 @@ unsigned int hashing::MultiKeyTable::BuildCompactedKeys(const KeyT * d_keys, con
     int compacted_key_size = 0;
     int* d_size_location = m_prefixsum_indicator_buffer + (num_entries - 1);
     cudaSafeCall(cudaMemcpyAsync(&(compacted_key_size), d_size_location, sizeof(int), cudaMemcpyDeviceToHost, stream));
-	cudaSafeCall(cudaStreamSynchronize(stream));
+//	cudaSafeCall(cudaStreamSynchronize(stream));
 	
     //Compact the prefixsum label
 	dim3 compact_blk(256);

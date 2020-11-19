@@ -215,8 +215,10 @@ void hashing::CompactCuckooTable::ReleaseBuffer()
 	cudaFree(m_temp_storage);
 
 	//Sync and check error
-	cudaSafeCall(cudaDeviceSynchronize());
+#if defined(CUDA_DEBUG_SYNC_CHECK)
+    cudaSafeCall(cudaDeviceSynchronize());
 	cudaSafeCall(cudaGetLastError());
+#endif
 }
 
 void hashing::CompactCuckooTable::ResetScratchTable(cudaStream_t stream)
@@ -253,7 +255,7 @@ bool hashing::CompactCuckooTable::InsertScratchTable(
 
         //Check success or not
         cudaSafeCall(cudaMemcpyAsync(&host_failure, m_failures, sizeof(unsigned), cudaMemcpyDeviceToHost, stream));
-        cudaSafeCall(cudaStreamSynchronize(stream));
+//        cudaSafeCall(cudaStreamSynchronize(stream));
         if(host_failure == 0) return true;
 
         //Re-try
@@ -289,7 +291,7 @@ void hashing::CompactCuckooTable::CompactKeys(cudaStream_t stream) {
     //Obtain the size of compacted key
     unsigned* d_size_location = m_prefixsum_unique_indicator + (m_table_size + stash_table_size - 1);
     cudaSafeCall(cudaMemcpyAsync(&m_compacted_key_size, d_size_location, sizeof(unsigned), cudaMemcpyDeviceToHost, stream));
-    cudaSafeCall(cudaStreamSynchronize(stream));
+//    cudaSafeCall(cudaStreamSynchronize(stream));
 
 	//Do compaction to obtain the final table
 	device::compactTableKernel<<<compact_grid, compact_blk, 0, stream>>>(

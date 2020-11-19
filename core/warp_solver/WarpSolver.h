@@ -269,8 +269,7 @@ namespace surfelwarp {
 		void syncAllSolverStream();
 
 		void buildSolverIndexStreamed();
-		void solverIterationGlobalIterationStreamed();
-		void solverIterationLocalIterationStreamed();
+        void solverIterationStreamed(bool global);
 	public:
 		void SolveStreamed();
 

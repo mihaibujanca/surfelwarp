@@ -39,7 +39,7 @@ namespace surfelwarp { namespace device {
 		}
 
 		//Sync here
-		__syncthreads();
+//		__syncthreads();// MAYBE NEEDED
 
 		//Shared lattice for cooperative loading
 		__shared__ LatticeCoordKey<image_permutohedral_dim> lattice[num_threads];
@@ -60,7 +60,7 @@ namespace surfelwarp { namespace device {
 			}
 
 			//Sync here for cooperative loading
-			__syncthreads();
+//			__syncthreads(); //MAYBE NEEDED
 
 			//Let one thread check the uniqueness
 			if (threadIdx.x == 0) {
@@ -85,14 +85,15 @@ namespace surfelwarp { namespace device {
 					}
 				} //End of checking loop
 			}
-		}
+            __syncthreads();
+
+        }
 
 
 		//End of checking loop
 		if (threadIdx.x == 0) {
 			num_unique_lattice_shared = num_unique_lattice;
 		}
-		__syncthreads();
 
 		//Store the result and return
 		if(num_unique_lattice_shared == 1) { 
@@ -106,6 +107,7 @@ namespace surfelwarp { namespace device {
 			if(threadIdx.x == 0) {
 				compacted_lattice_record[hashed_key_index] = lattice_record;
 			}
+            __syncthreads();
 			return; //All threads will return
 		}
 
@@ -156,9 +158,9 @@ namespace surfelwarp { namespace device {
 				if(threadIdx.x == 31) {
 					index_offset += scanned_matched;
 				}
-				__syncthreads();
 			}
-			
+            __syncthreads();
+
 			//Store the result
 			lattice_record.lattice_coord_offset[lattice_idx].y = begin + index_offset;
 		}

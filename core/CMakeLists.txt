@@ -8,7 +8,8 @@ source_group("geometry" FILES ${CORE_GEOMETRY_SRC})
 source_group("warp_solver" FILES ${CORE_SOLVER_SRC})
 
 #Add core library
-cuda_add_library(core_lib ${CORE_SRC} ${CORE_RENDER_SRC} ${CORE_GEOMETRY_SRC} ${CORE_SOLVER_SRC})
+cuda_add_library(core_lib STATIC ${CORE_SRC} ${CORE_RENDER_SRC} ${CORE_GEOMETRY_SRC} ${CORE_SOLVER_SRC})
+#cuda_add_library(core_lib ${CORE_SRC} ${CORE_RENDER_SRC} ${CORE_GEOMETRY_SRC} ${CORE_SOLVER_SRC})
 target_link_libraries(core_lib ${OpenCV_LIBRARIES})
 target_link_libraries(core_lib ${CUDA_CUBLAS_LIBRARIES})
 target_link_libraries(core_lib common_lib)
@@ -20,6 +21,7 @@ target_link_libraries(core_lib solver_lib)
 #Link the graphic lib
 target_link_libraries(core_lib glfw)
 target_compile_definitions(core_lib PUBLIC CUB_USE_COOPERATIVE_GROUPS)
+#set_target_properties(core_lib PROPERTIES COMPILE_FLAGS "-fPIC")
 
 if(WIN32)
     #In MSVC, alignments must be extendable for Eigen vectorizations

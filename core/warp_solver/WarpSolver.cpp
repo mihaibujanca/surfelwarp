@@ -301,7 +301,7 @@ void surfelwarp::WarpSolver::releaseNode2TermIndexBuffer() {
 void surfelwarp::WarpSolver::SetNode2TermIndexInput() {
 	const auto dense_depth_knn = m_image_knn_fetcher->DenseImageTermKNNArray();
 	//const auto density_map_knn = m_image_knn_fetcher->DenseImageTermKNNArray();
-	const auto density_map_knn = DeviceArrayView<ushort4>(); //Empty
+//	const auto density_map_knn = DeviceArrayView<ushort4>(); //Empty
 	const auto node_graph = m_warpfield_input.node_graph;
 	const auto foreground_mask_knn = m_density_foreground_handler->ForegroundMaskTermKNN();
 	const auto sparse_feature_knn = m_sparse_correspondence_handler->SparseFeatureKNN();
@@ -443,7 +443,7 @@ void surfelwarp::WarpSolver::BuildPreconditioner(cudaStream_t stream) {
 }
 
 void surfelwarp::WarpSolver::BuildPreconditionerGlobalIteration(cudaStream_t stream) {
-	m_preconditioner_rhs_builder->ComputeDiagonalPreconditionerGlobalIteration(stream);
+	m_preconditioner_rhs_builder->ComputeDiagonalPreconditioner(stream);
 }
 
 //The method to compute jt residual

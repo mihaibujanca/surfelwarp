@@ -34,20 +34,15 @@ void surfelwarp::WarpSolver::syncAllSolverStream() {
 }
 
 void surfelwarp::WarpSolver::SolveStreamed() {
-	//Sync before compuation
-	syncAllSolverStream();
-
+	//Sync before computation
+	//  syncAllSolverStream();  // No need
 	//Actual computation
 	buildSolverIndexStreamed();
 	for(auto i = 0; i < Constants::kNumGaussNewtonIterations; i++) {
-		if (m_iteration_data.IsGlobalIteration())
-			solverIterationGlobalIterationStreamed();
-		else
-			solverIterationLocalIterationStreamed();
+        solverIterationStreamed(m_iteration_data.IsGlobalIteration());
 	}
 
-	//Sync again for debug
-	syncAllSolverStream();
+//	syncAllSolverStream();
 }
 
 void surfelwarp::WarpSolver::buildSolverIndexStreamed() {
@@ -83,69 +78,34 @@ void surfelwarp::WarpSolver::buildSolverIndexStreamed() {
 	SetNode2TermIndexInput();
 	BuildNode2TermIndex(m_solver_stream[0]); //This doesnt block
 	BuildNodePair2TermIndexBlocked(m_solver_stream[1]); //This will block
-	cudaSafeCall(cudaStreamSynchronize(m_solver_stream[0]));
+//	cudaSafeCall(cudaStreamSynchronize(m_solver_stream[0]));
 }
 
-
-void surfelwarp::WarpSolver::solverIterationGlobalIterationStreamed() {
+void surfelwarp::WarpSolver::solverIterationStreamed(bool global) {
 	//Hand in the new SE3 to handlers
 	m_dense_depth_handler->UpdateNodeSE3(m_iteration_data.CurrentWarpFieldInput());
 	m_density_foreground_handler->UpdateNodeSE3(m_iteration_data.CurrentWarpFieldInput());
 	m_sparse_correspondence_handler->UpdateNodeSE3(m_iteration_data.CurrentWarpFieldInput());
 
 	//The computation of jacobian
-	ComputeTermJacobianFixedIndex(m_solver_stream[0], m_solver_stream[1], m_solver_stream[2], m_solver_stream[3]); //A sync should happened here
-	cudaSafeCall(cudaStreamSynchronize(m_solver_stream[0]));
-	cudaSafeCall(cudaStreamSynchronize(m_solver_stream[1]));
-	cudaSafeCall(cudaStreamSynchronize(m_solver_stream[2]));
-	cudaSafeCall(cudaStreamSynchronize(m_solver_stream[3]));
+	ComputeTermJacobianFixedIndex(m_solver_stream[0], m_solver_stream[1], m_solver_stream[2], m_solver_stream[3]); // A sync should happen here
+    cudaSafeCall(cudaStreamSynchronize(m_solver_stream[1]));
+    cudaSafeCall(cudaStreamSynchronize(m_solver_stream[3]));
 
 	//The computation of diagonal blks JtJ and JtError
 	SetPreconditionerBuilderAndJtJApplierInput();
 	SetJtJMaterializerInput();
-	BuildPreconditionerGlobalIteration(m_solver_stream[0]);
-	ComputeJtResidualGlobalIteration(m_solver_stream[1]);
-	MaterializeJtJNondiagonalBlocksGlobalIteration(m_solver_stream[2]);
-	cudaSafeCall(cudaStreamSynchronize(m_solver_stream[0]));
-	cudaSafeCall(cudaStreamSynchronize(m_solver_stream[1]));
+    BuildPreconditioner(m_solver_stream[0]);
+	if(global) {
+        ComputeJtResidualGlobalIteration(m_solver_stream[1]);
+        MaterializeJtJNondiagonalBlocksGlobalIteration(m_solver_stream[2]);
+    }
+	else {
+	    ComputeJtResidual(m_solver_stream[1]);
+	    MaterializeJtJNondiagonalBlocks(m_solver_stream[2]);
+    }
 	cudaSafeCall(cudaStreamSynchronize(m_solver_stream[2]));
 
-	//The assemble of matrix: a sync here
-	const auto diagonal_blks = m_preconditioner_rhs_builder->JtJDiagonalBlocks();
-	m_jtj_materializer->AssembleBinBlockCSR(diagonal_blks, m_solver_stream[0]);
-
-	//Debug methods
-	//LOG(INFO) << "The total squared residual in materialized, fixed-index solver is " << ComputeTotalResidualSynced(m_solver_stream[0]);
-
-	//Solve it and update
-	SolvePCGMaterialized();
-	m_iteration_data.ApplyWarpFieldUpdate(m_solver_stream[0]);
-	cudaSafeCall(cudaStreamSynchronize(m_solver_stream[0]));
-}
-
-void surfelwarp::WarpSolver::solverIterationLocalIterationStreamed() {
-	//Hand in the new SE3 to handlers
-	m_dense_depth_handler->UpdateNodeSE3(m_iteration_data.CurrentWarpFieldInput());
-	m_density_foreground_handler->UpdateNodeSE3(m_iteration_data.CurrentWarpFieldInput());
-	m_sparse_correspondence_handler->UpdateNodeSE3(m_iteration_data.CurrentWarpFieldInput());
-
-	//The computation of jacobian
-	ComputeTermJacobianFixedIndex(m_solver_stream[0], m_solver_stream[1], m_solver_stream[2], m_solver_stream[3]); // A sync should happend here
-	cudaSafeCall(cudaStreamSynchronize(m_solver_stream[0]));
-	cudaSafeCall(cudaStreamSynchronize(m_solver_stream[1]));
-	cudaSafeCall(cudaStreamSynchronize(m_solver_stream[2]));
-	cudaSafeCall(cudaStreamSynchronize(m_solver_stream[3]));
-
-	//The computation of diagonal blks JtJ and JtError
-	SetPreconditionerBuilderAndJtJApplierInput();
-	SetJtJMaterializerInput();
-	BuildPreconditioner(m_solver_stream[0]);
-	ComputeJtResidual(m_solver_stream[1]);
-	MaterializeJtJNondiagonalBlocks(m_solver_stream[2]);
-	cudaSafeCall(cudaStreamSynchronize(m_solver_stream[0]));
-	cudaSafeCall(cudaStreamSynchronize(m_solver_stream[1]));
-	cudaSafeCall(cudaStreamSynchronize(m_solver_stream[2]));
-	
 
 	//The assemble of matrix: a sync here
 	const auto diagonal_blks = m_preconditioner_rhs_builder->JtJDiagonalBlocks();

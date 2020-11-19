@@ -49,8 +49,13 @@ namespace surfelwarp {
 		void setDefaultFrameSkip();
 		void saveFrameSkipToJson(void* json_ptr) const;
 		void loadFrameSkipFromJson(const void* json_ptr);
+        bool m_solve_rigid;
+        void setDefaultSolveRigid();
+        void saveSolveRigidToJson(void* json_ptr) const;
+        void loadSolveRigidFromJson(const void* json_ptr);
 	public:
 		int frame_skip() const;
+		bool solve_rigid() const;
 
 		
 		//The frame peroids for reinit and recent

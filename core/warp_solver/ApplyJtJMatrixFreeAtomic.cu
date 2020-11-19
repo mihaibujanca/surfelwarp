@@ -102,6 +102,7 @@ namespace surfelwarp { namespace device {
 
 		//Assign to second node
 		node_jtj_x = global_jtj_x + jtj_dot_blk_size * node_ij.y;
+#pragma unroll
 		for(auto k = 0; k < jtj_dot_blk_size; k++) {
 			const float value = (accumlate_dot[0] * jacobian_j[k]
 			                  +  accumlate_dot[1] * jacobian_j[6 + k]

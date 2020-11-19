@@ -111,7 +111,7 @@ void surfelwarp::DensityForegroundMapHandler::FindValidColorForegroundMaskPixels
 	MarkValidColorForegroundMaskPixels(color_stream);
 	
 	//Sync before using more streams
-	cudaSafeCall(cudaStreamSynchronize(color_stream));
+//	cudaSafeCall(cudaStreamSynchronize(color_stream)); MAYBE NEEDED
 	
 	//Use two streams for compaction
 	CompactValidColorPixel(color_stream);

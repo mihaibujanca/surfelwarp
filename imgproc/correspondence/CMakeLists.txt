@@ -1,5 +1,5 @@
 file(GLOB CORRESPONDENCE_SRC *.h *.cuh *.hpp *.cpp *.cu)
 source_group("src" FILES ${CORRESPONDENCE_SRC})
-cuda_add_library(correspondence_lib ${CORRESPONDENCE_SRC})
+cuda_add_library(correspondence_lib STATIC ${CORRESPONDENCE_SRC})
 target_link_libraries(correspondence_lib common_lib)
 target_link_libraries(correspondence_lib math_lib)

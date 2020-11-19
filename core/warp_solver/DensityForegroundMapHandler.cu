@@ -210,7 +210,7 @@ void surfelwarp::DensityForegroundMapHandler::QueryCompactedColorPixelArraySize(
 		cudaMemcpyDeviceToHost, stream
 	));
 	cudaSafeCall(cudaStreamSynchronize(stream));
-	
+
 	//Correct the size of the array
 	m_valid_color_pixel.ResizeArrayOrException(num_valid_pairs);
 	m_valid_color_pixel_knn.ResizeArrayOrException(num_valid_pairs);

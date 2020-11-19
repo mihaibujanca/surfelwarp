@@ -9,7 +9,7 @@
 
 namespace surfelwarp {
 	
-	template<int FeatureDim = 18, int NumTrees = 5>
+	template<int FeatureDim, int NumTrees>
 	class PatchColliderForest {
 	private:
 		//The host memory for gpc nodes

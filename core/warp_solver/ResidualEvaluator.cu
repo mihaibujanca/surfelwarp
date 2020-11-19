@@ -205,6 +205,6 @@ void surfelwarp::ResidualEvaluator::CollectTotalResidual(cudaStream_t stream) {
 float surfelwarp::ResidualEvaluator::SyncQueryTotalResidualHost(cudaStream_t stream) {
 	const float* dev_ptr = m_residual_prefixsum.Ptr() + m_residual_prefixsum.ArraySize() - 1;
 	cudaSafeCall(cudaMemcpyAsync(m_residual_value_pagelock, dev_ptr, sizeof(float), cudaMemcpyDeviceToHost, stream));
-	cudaSafeCall(cudaStreamSynchronize(stream));
+//	cudaSafeCall(cudaStreamSynchronize(stream)); MAYBE NEEDED
 	return *m_residual_value_pagelock;
 }

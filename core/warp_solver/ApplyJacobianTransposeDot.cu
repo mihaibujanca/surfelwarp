@@ -49,7 +49,7 @@ namespace surfelwarp { namespace device {
 		for (auto iter = threadIdx.x; iter < jt_dot_blk_size; iter += thread_blk_size) {
 			reduced_blks[iter] = 0.0f;
 		}
-		__syncthreads();
+//		__syncthreads();
 
 		//The warp compute terms in the multiple of 32 (the warp size)
 		for (auto iter = threadIdx.x; iter < padded_term_size; iter += thread_blk_size)
@@ -112,7 +112,7 @@ namespace surfelwarp { namespace device {
 			}
 
 			//Do a reduction to reduced_men
-			__syncthreads();
+//			__syncthreads();
 			for (int i = 0; i < jt_dot_blk_size; i++) {
 				float data = (iter < term_size && term_valid) ? shared_blks[i][threadIdx.x] : 0.0f;
 				data = warp_scan(data);
@@ -126,7 +126,7 @@ namespace surfelwarp { namespace device {
 				if(threadIdx.x == warpSize - 1) {
 					reduced_blks[i] += data;
 				}
-				__syncthreads();
+//				__syncthreads();
 			}
 		}
 

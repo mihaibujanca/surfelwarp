@@ -13,7 +13,7 @@ namespace surfelwarp {
 	 * \brief Compute the appearance kernel between two input.
 	 *        The input is assumed normalized, thus directly use
 	 *        the squared norm and exp.
-	 * \param feature_0 Normalized feature fector, [(x, y) / sigma_alpha, (r, g, b) / sigma_beta]
+	 * \param feature_0 Normalized feature vector, [(x, y) / sigma_alpha, (r, g, b) / sigma_beta]
 	 * \param feature_1 
 	 * \return 
 	 */

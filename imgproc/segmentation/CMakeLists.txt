@@ -1,6 +1,6 @@
 file(GLOB SEGMENTATION_SRC *.h *.hpp *.cpp *.cu)
 source_group("src" FILES ${SEGMENTATION_SRC})
-cuda_add_library(segmentation_lib ${SEGMENTATION_SRC})
+cuda_add_library(segmentation_lib STATIC ${SEGMENTATION_SRC})
 target_link_libraries(segmentation_lib math_lib)
 target_link_libraries(segmentation_lib common_lib)
 target_link_libraries(segmentation_lib visualization_lib)

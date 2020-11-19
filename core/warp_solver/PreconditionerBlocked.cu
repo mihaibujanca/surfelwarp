@@ -188,15 +188,16 @@ namespace surfelwarp { namespace device {
 		for (auto iter = threadIdx.x; iter < preconditioner_blk_size; iter += warp_size) {
 			reduced_blks[iter] = 0.0f;
 		}
-		__syncthreads();
+//		__syncthreads();
 
 
 		//The warp compute terms in the multiple of 32 (the warp size)
+#pragma unroll
 		for (auto iter = threadIdx.x; iter < padded_term_size; iter += warp_size)
 		{
 			//The global term index
 			bool term_valid = true;
-			
+
 			// Do computation when the term is inside
 			if(iter < term_size)
 			{
@@ -246,23 +247,19 @@ namespace surfelwarp { namespace device {
 					break;
 				} // the switch of types
 			}
-			
-			
-			//Do a reduction to reduced_men
-			__syncthreads();
+
+
+#pragma unroll
 			for (int i = 0; i < preconditioner_blk_size; i++) {
 				float data = (iter < term_size && term_valid) ? shared_blks[i][threadIdx.x] : 0.0f;
 				data = warp_scan(data);
 				if (threadIdx.x == warpSize - 1) {
 					reduced_blks[i] += data;
 				}
-				
-				//Another sync here for reduced mem?
-				//__syncthreads();
 			}
 		}
-		
-		
+
+
 		// add small offset to diagonal elements
 		if (threadIdx.x < 6) {
 			reduced_blks[7*threadIdx.x] += 1e-2f;
@@ -270,14 +267,12 @@ namespace surfelwarp { namespace device {
 		
 		__syncthreads();
 
-		//All the terms that contribute to this value is done, store to global memory
+        //All the terms that contribute to this value is done, store to global memory
 #pragma unroll
 		for (int i = threadIdx.x; i < preconditioner_blk_size; i += 32) {
 			diagonal_preconditioner[preconditioner_blk_size * node_idx + i] = reduced_blks[i];
 		}
 	}
-
-
 
 	__global__ void computeBlockDiagonalPreconditionerGlobalIterationKernel(
 		const Node2TermsIndex::Node2TermMap node2term,
@@ -299,7 +294,7 @@ namespace surfelwarp { namespace device {
 		for (auto iter = threadIdx.x; iter < preconditioner_blk_size; iter += warp_size) {
 			reduced_blks[iter] = 0.0f;
 		}
-		__syncthreads();
+//		__syncthreads();
 
 
 		//The warp compute terms in the multiple of 32 (the warp size)
@@ -355,11 +350,10 @@ namespace surfelwarp { namespace device {
 			}
 
 			//Continue if everything is outside
-//			if(__all(!term_valid))
 			if(__all_sync(0xFFFFFFFF,!term_valid))
 				continue;
 
-			//Do a reduction to reduced_men
+			//Do a reduction to reduced_mem
 //			__syncthreads();
 			for (int i = 0; i < preconditioner_blk_size; i++) {
 				float data = (iter < term_size && term_valid) ? shared_blks[i][threadIdx.x] : 0.0f;
@@ -379,7 +373,7 @@ namespace surfelwarp { namespace device {
 			reduced_blks[7 * threadIdx.x] += 1e-2f;
 		}
 
-		__syncthreads();
+//		__syncthreads();
 
 		//All the terms that contribute to this value is done, store to global memory
 #pragma unroll
@@ -412,6 +406,9 @@ void surfelwarp::PreconditionerRhsBuilder::ComputeDiagonalBlocks(cudaStream_t st
 	
 	//Sanity check
 	//diagonalPreconditionerSanityCheck();
+    //Do inversion if it's a global iteration
+    if(m_penalty_constants.Density() < 1e-7f)
+        ComputeDiagonalPreconditionerInverse(stream);
 }
 
 void surfelwarp::PreconditionerRhsBuilder::ComputeDiagonalPreconditionerGlobalIteration(cudaStream_t stream) {
@@ -423,7 +420,7 @@ void surfelwarp::PreconditionerRhsBuilder::ComputeDiagonalPreconditionerGlobalIt
 	m_block_preconditioner.ResizeArrayOrException(num_nodes * device::preconditioner_blk_size);
 	dim3 blk(device::warp_size);
 	dim3 grid(num_nodes);
-	device::computeBlockDiagonalPreconditionerGlobalIterationKernel<<<grid, blk, 0, stream>>>(
+	device::computeBlockDiagonalPreconditionerKernel<<<grid, blk, 0, stream>>>(
 		m_node2term_map,
 		m_term2jacobian_map,
 		m_block_preconditioner.Ptr(),

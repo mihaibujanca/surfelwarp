@@ -59,6 +59,7 @@ void surfelwarp::RigidSolver::rigidSolveHostIterationSync(cudaStream_t stream) {
 	
 	//Load the data into Eigen
 	auto shift = 0;
+#pragma unroll
 	for (int i = 0; i < 6; i++) {
 		for (int j = i; j < 6; j++) {
 			const float value = host_array[shift++];
