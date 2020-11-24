@@ -147,8 +147,6 @@ namespace surfelwarp { namespace device {
 } // namespace device
 } // namespace surfelwarp
 
-
-
 void surfelwarp::SparseCorrespondenceHandler::ChooseValidPixelPairs(cudaStream_t stream) {
 	m_valid_pixel_indicator.ResizeArrayOrException(m_observations.correspond_pixel_pairs.Size());
 	m_corrected_pixel_pairs.ResizeArrayOrException(m_observations.correspond_pixel_pairs.Size());
@@ -252,6 +250,8 @@ void surfelwarp::SparseCorrespondenceHandler::QueryCompactedArraySize(cudaStream
 /* The method to build the term 2 jacobian map
  */
 void surfelwarp::SparseCorrespondenceHandler::forwardWarpFeatureVertex(cudaStream_t stream) {
+    if(m_valid_reference_vertex.ArraySize() == 0)
+        return;
 	//Correct the size
 	m_valid_warped_vertex.ResizeArrayOrException(m_valid_reference_vertex.ArraySize());
 

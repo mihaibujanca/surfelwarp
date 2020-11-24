@@ -77,15 +77,14 @@ surfelwarp::DeviceArrayView<surfelwarp::DepthSurfel> surfelwarp::ImageProcessor:
         const cv::Mat* rgb,
         const cv::Mat* depth
 ) {
-        if(rgb && depth)
-        {
-//            LoadPrevRGBImageFromOpenCV();
-            LoadDepthImageFromOpenCV(*depth);
-            LoadRGBImageFromOpenCV(*rgb);
-        }
-        else {
-            FetchFrame(frame_idx);
-        }
+    if(rgb && depth)
+    {
+        LoadDepthImageFromOpenCV(*depth);
+        LoadRGBImageFromOpenCV(*rgb);
+    }
+    else {
+        FetchFrame(frame_idx);
+    }
 	UploadDepthImage(stream);
 	UploadRawRGBImage(stream);
 	

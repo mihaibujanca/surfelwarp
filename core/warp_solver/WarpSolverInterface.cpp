@@ -65,7 +65,7 @@ void surfelwarp::WarpSolver::fullSolverIterationMatrixFreeFixedIndexSerial(cudaS
 	BuildNode2TermIndex(stream);
 
 	//Compute jacobian
-	ComputeTermJacobianFixedIndex(stream, stream, stream, stream);
+	ComputeTermJacobianIndex(stream, stream, stream, stream, true);
 
 	//The computation of diagonal blks JtJ and JtError
 	SetPreconditionerBuilderAndJtJApplierInput();
@@ -87,7 +87,7 @@ void surfelwarp::WarpSolver::matrixFreeFixedIndexSolverIterationSerial(cudaStrea
 	m_sparse_correspondence_handler->UpdateNodeSE3(m_iteration_data.CurrentWarpFieldInput());
 
 	//Re-compute the jacobian
-	ComputeTermJacobianFixedIndex(stream, stream, stream, stream);
+	ComputeTermJacobianIndex(stream, stream, stream, stream, true);
 	SetPreconditionerBuilderAndJtJApplierInput();
 	BuildPreconditioner(stream);
 	ComputeJtResidual(stream);
@@ -123,7 +123,7 @@ void surfelwarp::WarpSolver::fullSolverIterationMaterializedFixedIndexSerial(cud
 	BuildNodePair2TermIndexBlocked(stream);
 	
 	//The computation of jacobian
-	ComputeTermJacobianFixedIndex(stream, stream, stream, stream);
+	ComputeTermJacobianIndex(stream, stream, stream, stream, true);
 	
 	//The computation of diagonal blks JtJ and JtError
 	SetPreconditionerBuilderAndJtJApplierInput();
@@ -153,7 +153,7 @@ void surfelwarp::WarpSolver::materializedFixedIndexSolverIterationSerial(cudaStr
 	m_sparse_correspondence_handler->UpdateNodeSE3(m_iteration_data.CurrentWarpFieldInput());
 	
 	//The computation of jacobian
-	ComputeTermJacobianFixedIndex(stream, stream, stream, stream);
+	ComputeTermJacobianIndex(stream, stream, stream, stream, true);
 	
 	//The computation of diagonal blks JtJ and JtError
 	SetPreconditionerBuilderAndJtJApplierInput();
@@ -203,7 +203,7 @@ void surfelwarp::WarpSolver::fullGlobalSolverIterationMaterializedFixedIndexSeri
 	BuildNodePair2TermIndexBlocked(stream);
 	
 	//The computation of jacobian
-	ComputeTermJacobianFixedIndex(stream, stream, stream, stream);
+	ComputeTermJacobianIndex(stream, stream, stream, stream, true);
 	
 	//The computation of diagonal blks JtJ and JtError
 	SetPreconditionerBuilderAndJtJApplierInput();
@@ -233,7 +233,7 @@ void surfelwarp::WarpSolver::materializedFixedIndexSolverGlobalIterationSerial(c
 	m_sparse_correspondence_handler->UpdateNodeSE3(m_iteration_data.CurrentWarpFieldInput());
 	
 	//The computation of jacobian
-	ComputeTermJacobianFixedIndex(stream, stream, stream, stream);
+	ComputeTermJacobianIndex(stream, stream, stream, stream, true);
 	
 	//The computation of diagonal blks JtJ and JtError
 	SetPreconditionerBuilderAndJtJApplierInput();

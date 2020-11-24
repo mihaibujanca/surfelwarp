@@ -33,7 +33,6 @@ void surfelwarp::SparseCorrespondenceHandler::ReleaseBuffer() {
 	cudaSafeCall(cudaFreeHost(m_correspondence_array_size));
 }
 
-
 /* The main processing interface
  */
 void surfelwarp::SparseCorrespondenceHandler::SetInputs(
@@ -56,12 +55,10 @@ void surfelwarp::SparseCorrespondenceHandler::SetInputs(
 	m_camera2world = world2camera.inverse();
 }
 
-
 void surfelwarp::SparseCorrespondenceHandler::UpdateNodeSE3(DeviceArrayView<DualQuaternion> node_se3) {
 	SURFELWARP_CHECK(m_node_se3.Size() == node_se3.Size());
 	m_node_se3 = node_se3;
 }
-
 
 /* Build the correspondence vertex pairs
  */
@@ -70,9 +67,3 @@ void surfelwarp::SparseCorrespondenceHandler::BuildCorrespondVertexKNN(cudaStrea
 	CompactQueryPixelPairs(stream);
 	QueryCompactedArraySize(stream); //This will sync host threads with stream
 }
-
-
-
-
-
-

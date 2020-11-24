@@ -11,7 +11,7 @@ void surfelwarp::WarpSolver::TestSolver() {
 #if defined(USE_MATERIALIZED_JTJ)
 	BuildNodePair2TermIndexBlocked();
 #endif
-	ComputeTermJacobiansFreeIndex();
+	ComputeTermJacobianIndex();
 	SetPreconditionerBuilderAndJtJApplierInput();
 	BuildPreconditioner();
 	ComputeJtResidual();
@@ -47,7 +47,7 @@ void surfelwarp::WarpSolver::FullSolverIterationTest() {
 #if defined(USE_MATERIALIZED_JTJ)
 	BuildNodePair2TermIndexBlocked();
 #endif
-	ComputeTermJacobiansFreeIndex();
+	ComputeTermJacobianIndex();
 	SetPreconditionerBuilderAndJtJApplierInput();
 	BuildPreconditioner();
 	ComputeJtResidual();
@@ -78,7 +78,7 @@ void surfelwarp::WarpSolver::MaterializedFullSolverIterationTest() {
 	SetNode2TermIndexInput();
 	BuildNode2TermIndex();
 	BuildNodePair2TermIndexBlocked();
-	ComputeTermJacobiansFreeIndex();
+	ComputeTermJacobianIndex();
 	SetPreconditionerBuilderAndJtJApplierInput();
 	BuildPreconditioner();
 	ComputeJtResidual();
@@ -109,7 +109,7 @@ void surfelwarp::WarpSolver::MaterializedFullSolverIterationTest() {
 	SetNode2TermIndexInput();
 	BuildNode2TermIndex();
 	BuildNodePair2TermIndexBlocked();
-	ComputeTermJacobiansFreeIndex();
+	ComputeTermJacobianIndex();
 	SetPreconditionerBuilderAndJtJApplierInput();
 	BuildPreconditioner();
 	ComputeJtResidual();
@@ -124,7 +124,7 @@ void surfelwarp::WarpSolver::SolverIterationWithIndexTest() {
 	m_dense_depth_handler->UpdateNodeSE3(m_iteration_data.CurrentWarpFieldInput());
 	m_density_foreground_handler->UpdateNodeSE3(m_iteration_data.CurrentWarpFieldInput());
 	m_sparse_correspondence_handler->UpdateNodeSE3(m_iteration_data.CurrentWarpFieldInput());
-	ComputeTermJacobiansFreeIndex();
+	ComputeTermJacobianIndex();
 	SetPreconditionerBuilderAndJtJApplierInput();
 	BuildPreconditioner();
 	ComputeJtResidual();
@@ -156,7 +156,7 @@ void surfelwarp::WarpSolver::fullSolverIterationMatrixFreeSerial(cudaStream_t st
 	SelectValidSparseFeatureMatchedPairs(stream);
 	SetNode2TermIndexInput();
 	BuildNode2TermIndex(stream);
-	ComputeTermJacobiansFreeIndex(stream, stream, stream, stream);
+	ComputeTermJacobianIndex(stream, stream, stream, stream, false); //compute free index
 	SetPreconditionerBuilderAndJtJApplierInput();
 	BuildPreconditioner(stream);
 	ComputeJtResidual(stream);
@@ -184,7 +184,7 @@ void surfelwarp::WarpSolver::fullSolverIterationMaterializedIndexFreeSerial(cuda
 	SetNode2TermIndexInput();
 	BuildNode2TermIndex(stream);
 	BuildNodePair2TermIndexBlocked(stream);
-	ComputeTermJacobiansFreeIndex(stream, stream, stream, stream);
+	ComputeTermJacobianIndex(stream, stream, stream, stream, false); // compute free index
 	SetPreconditionerBuilderAndJtJApplierInput();
 	BuildPreconditioner(stream);
 	ComputeJtResidual(stream);
@@ -226,7 +226,7 @@ void surfelwarp::WarpSolver::materializedLazyEvaluateSolverIterationSerial(cudaS
 	m_sparse_correspondence_handler->UpdateNodeSE3(m_iteration_data.CurrentWarpFieldInput());
 
 	//The computation of jacobian
-	ComputeTermJacobianFixedIndex(stream, stream, stream, stream);
+	ComputeTermJacobianIndex(stream, stream, stream, stream, true);
 
 	//The computation of diagonal blks JtJ and JtError
 	SetPreconditionerBuilderAndJtJApplierInput();

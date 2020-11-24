@@ -88,8 +88,9 @@ void surfelwarp::WarpSolver::solverIterationStreamed(bool global) {
 	m_sparse_correspondence_handler->UpdateNodeSE3(m_iteration_data.CurrentWarpFieldInput());
 
 	//The computation of jacobian
-	ComputeTermJacobianFixedIndex(m_solver_stream[0], m_solver_stream[1], m_solver_stream[2], m_solver_stream[3]); // A sync should happen here
-    cudaSafeCall(cudaStreamSynchronize(m_solver_stream[1]));
+	ComputeTermJacobianIndex(m_solver_stream[0], m_solver_stream[1], m_solver_stream[2], m_solver_stream[3], true); // A sync should happen here
+//    syncAllSolverStream();
+	cudaSafeCall(cudaStreamSynchronize(m_solver_stream[1]));
     cudaSafeCall(cudaStreamSynchronize(m_solver_stream[3]));
 
 	//The computation of diagonal blks JtJ and JtError

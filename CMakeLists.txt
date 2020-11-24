@@ -70,7 +70,8 @@ endif(MSVC)
 if(UNIX)
 #    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -O3 --profile --generate-line-info --use_fast_math -std=c++17")
     set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -O3 --use_fast_math -std=c++17 -Xptxas -O3 -Xcompiler=-O3")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast -std=c++17")
+#    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -g -G -std=c++17 -Xptxas -g -Xcompiler=-g")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast -std=c++17") # Ofast here
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Ofast")
 endif(UNIX)
 

@@ -100,195 +100,7 @@ void surfelwarp::SurfelWarpSerial::ProcessFirstFrame(const cv::Mat* rgb, const c
     m_frame_idx++;
 }
 
-void surfelwarp::SurfelWarpSerial::ProcessNextFrameWithReinit(bool offline_save) {
-    //Draw the required maps, assume the buffer is not mapped to cuda at input
-    const auto num_vertex = m_surfel_geometry[m_updated_geometry_index]->NumValidSurfels();
-    const int current_time = m_frame_idx - 1;
-    const Matrix4f init_world2camera = m_camera.GetWorld2CameraEigen();
-
-    //Check the frame and draw
-    SURFELWARP_CHECK(m_frame_idx >= m_reinit_frame_idx);
-    const bool draw_recent = shouldDrawRecentObservation();
-    if(draw_recent) {
-        m_renderer->DrawSolverMapsWithRecentObservation(num_vertex, m_updated_geometry_index, current_time, init_world2camera);
-    }
-    else {
-        m_renderer->DrawSolverMapsConfidentObservation(num_vertex, m_updated_geometry_index, current_time, init_world2camera);
-    }
-
-    //Map to solver maps
-    Renderer::SolverMaps solver_maps;
-    m_renderer->MapSolverMapsToCuda(solver_maps);
-    m_renderer->MapSurfelGeometryToCuda(m_updated_geometry_index);
-
-    //Process the next depth frame
-    CameraObservation observation;
-    //m_image_processor->ProcessFrameSerial(observation, m_frame_idx);
-    m_image_processor->ProcessFrameStreamed(observation, m_frame_idx);
-
-    //First perform rigid solver
-    m_rigid_solver->SetInputMaps(solver_maps, observation, m_camera.GetWorld2Camera());
-    const mat34 solved_world2camera = m_rigid_solver->Solve();
-    m_camera.SetWorld2Camera(solved_world2camera);
-    Eigen::IOFormat CommaInitFmt(Eigen::StreamPrecision, Eigen::DontAlignCols, " ", " ", "", "", "", "");
-    std::cout << m_camera.GetWorld2CameraEigen().format(CommaInitFmt) << std::endl;
-    //The resource from geometry attributes
-    const auto solver_geometry = m_surfel_geometry[m_updated_geometry_index]->SolverAccess();
-    const auto solver_warpfield = m_warp_field->SolverAccess();
-
-    //Pass the input to warp solver
-    m_warp_solver->SetSolverInputs(
-            observation,
-            solver_maps,
-            solver_geometry,
-            solver_warpfield,
-            m_camera.GetWorld2Camera() //The world to camera might be updated by rigid solver
-    );
-
-    //Solve it
-    //m_warp_solver->SolveSerial();
-    m_warp_solver->SolveStreamed();
-    const auto solved_se3 = m_warp_solver->SolvedNodeSE3();
-
-    //Do a forward warp and build index
-    m_warp_field->UpdateHostDeviceNodeSE3NoSync(solved_se3);
-    SurfelNodeDeformer::ForwardWarpSurfelsAndNodes(*m_warp_field, *m_surfel_geometry[m_updated_geometry_index], solved_se3);
-
-    //Compute the nodewise error
-    m_warp_solver->ComputeAlignmentErrorOnNodes();
-
-    //Build the live node index for later use
-    const auto live_nodes = m_warp_field->LiveNodeCoordinates();
-    m_live_nodes_knn_skinner->BuildIndex(live_nodes);
-
-    //Draw the map for point fusion
-    m_renderer->UnmapSurfelGeometryFromCuda(m_updated_geometry_index);
-    m_renderer->UnmapSolverMapsFromCuda();
-    m_renderer->DrawFusionMaps(num_vertex, m_updated_geometry_index, m_camera.GetWorld2CameraEigen());
-
-    //Map the fusion map to cuda
-    Renderer::FusionMaps fusion_maps;
-    m_renderer->MapFusionMapsToCuda(fusion_maps);
-    //Map both maps to surfelwarp as they are both required
-    m_renderer->MapSurfelGeometryToCuda(0);
-    m_renderer->MapSurfelGeometryToCuda(1);
-
-    //The hand tune variable now. Should be replaced later
-    const bool use_reinit = shouldDoReinit();
-    const bool do_integrate = shouldDoIntegration();
-
-    //The geometry index that both fusion and reinit will write to, if no writing then keep current geometry index
-    auto fused_geometry_idx = m_updated_geometry_index;
-
-    //Depends on should do reinit or integrate
-    if(use_reinit) {
-        //First setup the idx
-        m_reinit_frame_idx = m_frame_idx;
-        fused_geometry_idx = (m_updated_geometry_index + 1) % 2;
-
-        //Hand in the input to reinit processor
-        m_geometry_reinit_processor->SetInputs(
-                fusion_maps,
-                observation,
-                m_updated_geometry_index,
-                float(m_frame_idx),
-                m_camera.GetWorld2Camera()
-        );
-
-        //Process it
-        const auto node_error = m_warp_solver->GetNodeAlignmentError();
-        unsigned num_remaining_surfel, num_appended_surfel;
-        m_geometry_reinit_processor->ProcessReinitObservedOnlySerial(num_remaining_surfel, num_appended_surfel);
-        //m_geometry_reinit_processor->ProcessReinitNodeErrorSerial(num_remaining_surfel, num_appended_surfel, node_error, 0.06f);
-
-        //Reinit the warp field
-        const auto reference_vertex = m_surfel_geometry[fused_geometry_idx]->GetReferenceVertexConfidence();
-        m_warpfield_initializer->InitializeReferenceNodeAndSE3FromVertex(reference_vertex, m_warp_field);
-
-        //Build the index and skinning nodes and surfels
-        m_warp_field->BuildNodeGraph();
-
-        //Build skinning index
-        const auto& reference_nodes = m_warp_field->ReferenceNodeCoordinates();
-        m_reference_knn_skinner->BuildInitialSkinningIndex(reference_nodes);
-
-        //Perform skinning
-        auto skinner_geometry = m_surfel_geometry[fused_geometry_idx]->SkinnerAccess();
-        auto skinner_warpfield = m_warp_field->SkinnerAccess();
-        m_reference_knn_skinner->PerformSkinning(skinner_geometry, skinner_warpfield);
-    } else
-        if(do_integrate) {
-        //Update the frame idx
-        fused_geometry_idx = (m_updated_geometry_index + 1) % 2;
-
-        //Hand in the input to fuser
-        const auto warpfield_input = m_warp_field->GeometryUpdaterAccess();
-        m_live_geometry_updater->SetInputs(
-                fusion_maps,
-                observation,
-                warpfield_input,
-                m_live_nodes_knn_skinner,
-                m_updated_geometry_index,
-                float(m_frame_idx),
-                m_camera.GetWorld2Camera()
-        );
-
-        //Do fusion
-        unsigned num_remaining_surfel, num_appended_surfel;
-        //m_live_geometry_updater->ProcessFusionSerial(num_remaining_surfel, num_appended_surfel);
-        m_live_geometry_updater->ProcessFusionStreamed(num_remaining_surfel, num_appended_surfel);
-
-        //Do a inverse warping
-        SurfelNodeDeformer::InverseWarpSurfels(*m_warp_field, *m_surfel_geometry[fused_geometry_idx], solved_se3);
-
-        //Extend the warp field reference nodes and SE3
-        const auto prev_node_size = m_warp_field->CheckAndGetNodeSize();
-        const float4* appended_vertex_ptr = m_surfel_geometry[fused_geometry_idx]->ReferenceVertexArray().RawPtr() + num_remaining_surfel;
-        DeviceArrayView<float4> appended_vertex_view(appended_vertex_ptr, num_appended_surfel);
-        const ushort4* appended_knn_ptr = m_surfel_geometry[fused_geometry_idx]->SurfelKNNArray().RawPtr() + num_remaining_surfel;
-        DeviceArrayView<ushort4> appended_surfel_knn(appended_knn_ptr, num_appended_surfel);
-        m_warpfield_extender->ExtendReferenceNodesAndSE3Sync(appended_vertex_view, appended_surfel_knn, m_warp_field);
-
-        //Rebuild the node graph
-        m_warp_field->BuildNodeGraph();
-
-        //Update skinning
-        if(m_warp_field->CheckAndGetNodeSize() > prev_node_size){
-            m_reference_knn_skinner->UpdateBruteForceSkinningIndexWithNewNodes(m_warp_field->ReferenceNodeCoordinates().DeviceArrayReadOnly(), prev_node_size);
-
-            //Update skinning
-            auto skinner_geometry = m_surfel_geometry[fused_geometry_idx]->SkinnerAccess();
-            auto skinner_warpfield = m_warp_field->SkinnerAccess();
-            m_reference_knn_skinner->PerformSkinningUpdate(skinner_geometry, skinner_warpfield, prev_node_size);
-        }
-    }
-
-    //Unmap attributes
-    m_renderer->UnmapFusionMapsFromCuda();
-    m_renderer->UnmapSurfelGeometryFromCuda(0);
-    m_renderer->UnmapSurfelGeometryFromCuda(1);
-
-    //Debug save
-    if(offline_save) {
-        const auto with_recent = draw_recent || use_reinit;
-        const auto& save_dir = createOrGetDataDirectory(m_frame_idx);
-        saveCameraObservations(observation, save_dir);
-        saveSolverMaps(solver_maps, save_dir);
-
-        const auto num_fused_vertex = m_surfel_geometry[fused_geometry_idx]->NumValidSurfels();
-        saveVisualizationMaps(
-                num_fused_vertex, fused_geometry_idx,
-                m_camera.GetWorld2CameraEigen(), m_camera.GetInitWorld2CameraEigen(),
-                save_dir, with_recent
-        );
-    }
-
-    //Update the index
-    m_frame_idx++;
-    m_updated_geometry_index = fused_geometry_idx;
-}
-
-void surfelwarp::SurfelWarpSerial::Process(const cv::Mat* rgb, const cv::Mat* depth, bool compute_pose) {
+void surfelwarp::SurfelWarpSerial::Process(const cv::Mat* rgb, const cv::Mat* depth, bool compute_pose, bool offline_save) {
     if(m_frame_idx == ConfigParser::Instance().start_frame_idx()) {
         ProcessFirstFrame(rgb, depth);
     }
@@ -316,13 +128,15 @@ void surfelwarp::SurfelWarpSerial::Process(const cv::Mat* rgb, const cv::Mat* de
 
         //Process the next depth frame
         CameraObservation observation;
-        m_image_processor->ProcessFrameStreamed(observation, 0, rgb, depth);
+        m_image_processor->ProcessFrameStreamed(observation, m_frame_idx, rgb, depth);
 
         if(compute_pose)
         {
             m_rigid_solver->SetInputMaps(solver_maps, observation, m_camera.GetWorld2Camera());
             const mat34 solved_world2camera = m_rigid_solver->Solve();
             m_camera.SetWorld2Camera(solved_world2camera);
+            Eigen::IOFormat CommaInitFmt(Eigen::StreamPrecision, Eigen::DontAlignCols, " ", " ", "", "", "", "");
+            std::cout << m_camera.GetWorld2CameraEigen().format(CommaInitFmt) << std::endl;
         }
 
         //The resource from geometry attributes
@@ -453,11 +267,25 @@ void surfelwarp::SurfelWarpSerial::Process(const cv::Mat* rgb, const cv::Mat* de
                 m_reference_knn_skinner->PerformSkinningUpdate(skinner_geometry, skinner_warpfield, prev_node_size);
             }
         }
-
         //Unmap attributes
         m_renderer->UnmapFusionMapsFromCuda();
         m_renderer->UnmapSurfelGeometryFromCuda(0);
         m_renderer->UnmapSurfelGeometryFromCuda(1);
+
+        //Debug save
+        if(offline_save) {
+            const auto with_recent = draw_recent || use_reinit;
+            const auto& save_dir = createOrGetDataDirectory(m_frame_idx);
+            saveCameraObservations(observation, save_dir);
+            saveSolverMaps(solver_maps, save_dir);
+
+            const auto num_fused_vertex = m_surfel_geometry[fused_geometry_idx]->NumValidSurfels();
+            saveVisualizationMaps(
+                    num_fused_vertex, fused_geometry_idx,
+                    m_camera.GetWorld2CameraEigen(), m_camera.GetInitWorld2CameraEigen(),
+                    save_dir, with_recent
+            );
+        }
 
         //Update the index
         m_updated_geometry_index = fused_geometry_idx;
@@ -582,8 +410,8 @@ bool surfelwarp::SurfelWarpSerial::shouldDoIntegration() const {
     return true;
 }
 
-static bool shouldDoReinitConfig(int frame_idx) {
-    using namespace surfelwarp;
+//The processing interface of pipeline
+bool surfelwarp::SurfelWarpSerial::shouldDoReinit() const {
     const auto& config = ConfigParser::Instance();
 
     // Check the config
@@ -591,19 +419,10 @@ static bool shouldDoReinitConfig(int frame_idx) {
         return false;
     }
 
-    // Check the peroid
+    // Check the period
     const auto period = config.reinit_period();
     SURFELWARP_CHECK(period > 0);
-    if (frame_idx > 0 && (frame_idx % period) == 0) {
-        return true;
-    }
-    else
-        return false;
-}
-
-//The processing interface of pipeline
-bool surfelwarp::SurfelWarpSerial::shouldDoReinit() const {
-    return shouldDoReinitConfig(m_frame_idx);
+    return m_frame_idx > 0 && (m_frame_idx % period) == 0;
 }
 
 bool surfelwarp::SurfelWarpSerial::shouldDrawRecentObservation() const {

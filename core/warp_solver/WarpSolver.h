@@ -181,21 +181,14 @@ namespace surfelwarp {
 		/* Compute the jacobians for all terms
 		 */
 	public:
-		void ComputeTermJacobiansFreeIndex(
+		void ComputeTermJacobianIndex(
 			cudaStream_t dense_depth = 0,
 			cudaStream_t density_map = 0,
 			cudaStream_t foreground_mask = 0,
-			cudaStream_t sparse_feature = 0
+			cudaStream_t sparse_feature = 0,
+			bool fixed = false
 		);
-		void ComputeTermJacobianFixedIndex(
-			cudaStream_t dense_depth = 0,
-			cudaStream_t density_map = 0,
-			cudaStream_t foreground_mask = 0,
-			cudaStream_t sparse_feature = 0
-		);
-		
-		
-		
+
 		/* Construct the preconditioner and rhs of the method
 		 */
 	private:

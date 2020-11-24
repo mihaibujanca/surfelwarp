@@ -1,9 +1,9 @@
 #pragma once
 
 //Disable cuda on Eigen
-#ifndef EIGEN_NO_CUDA
-#define EIGEN_NO_CUDA
-#endif
+//#ifndef EIGEN_NO_CUDA
+//#define EIGEN_NO_CUDA
+//#endif
 
 //Perform debug sync and check cuda error
 //#define CUDA_DEBUG_SYNC_CHECK

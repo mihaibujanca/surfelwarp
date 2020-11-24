@@ -349,24 +349,16 @@ void surfelwarp::WarpSolver::BuildNodePair2TermIndexBlocked(cudaStream_t stream)
 
 /* Prepare the jacobian for later use
  */
-void surfelwarp::WarpSolver::ComputeTermJacobiansFreeIndex(
+void surfelwarp::WarpSolver::ComputeTermJacobianIndex(
 	cudaStream_t dense_depth, cudaStream_t density_map,
-	cudaStream_t foreground_mask, cudaStream_t sparse_feature
+	cudaStream_t foreground_mask, cudaStream_t sparse_feature,
+	bool fixed
 ) {
-	m_dense_depth_handler->ComputeJacobianTermsFreeIndex(dense_depth);
-	computeSmoothTermNode2Jacobian(sparse_feature);
-	m_density_foreground_handler->ComputeTwistGradient(density_map, foreground_mask);
-	m_sparse_correspondence_handler->BuildTerm2Jacobian(sparse_feature);
-}
-
-//Assume the SE3 for each term expepted smooth term is updated
-void surfelwarp::WarpSolver::ComputeTermJacobianFixedIndex(
-	cudaStream_t dense_depth,
-	cudaStream_t density_map,
-	cudaStream_t foreground_mask,
-	cudaStream_t sparse_feature
-) {
-	m_dense_depth_handler->ComputeJacobianTermsFixedIndex(dense_depth);
+    if(fixed)
+        //Assume the SE3 for each term expected smooth term is updated
+        m_dense_depth_handler->ComputeJacobianTermsFixedIndex(dense_depth);
+    else
+        m_dense_depth_handler->ComputeJacobianTermsFreeIndex(dense_depth);
 	computeSmoothTermNode2Jacobian(sparse_feature);
 	m_density_foreground_handler->ComputeTwistGradient(density_map, foreground_mask);
 	m_sparse_correspondence_handler->BuildTerm2Jacobian(sparse_feature);

@@ -63,46 +63,10 @@ namespace surfelwarp { namespace device {
 
 	template<int PatchHalfSize, int NumTrees>
 	__global__ void buildColliderKeyValueKernel(
-		cudaTextureObject_t rgb_0, cudaTextureObject_t rgb_1,
-		const typename PatchColliderForest<PatchColliderRGBCorrespondence::Parameters::feature_dim, NumTrees>::GPCForestDevice forest,
-		const int stride, const int kv_rows, const int kv_cols,
-		unsigned* keys, unsigned* values
-	) {
-		const auto kv_x = threadIdx.x + blockDim.x * blockIdx.x;
-		const auto kv_y = threadIdx.y + blockDim.y * blockIdx.y;
-		if(kv_x >= kv_cols || kv_y >= kv_rows) return;
-
-		//Transfer to the center of rgb image
-		const auto rgb_center_x = PatchHalfSize + kv_x * stride;
-		const auto rgb_center_y = PatchHalfSize + kv_y * stride;
-
-		//Build the feature
-		GPCPatchFeature<PatchColliderRGBCorrespondence::Parameters::feature_dim> patch_feature_0, patch_feature_1;
-		buildDCTPatchFeature<PatchHalfSize>(rgb_0, rgb_center_x, rgb_center_y, patch_feature_0);
-		buildDCTPatchFeature<PatchHalfSize>(rgb_1, rgb_center_x, rgb_center_y, patch_feature_1);
-
-		//Search it for the key
-		const unsigned key_0 = searchGPCForest<PatchColliderRGBCorrespondence::Parameters::feature_dim, NumTrees>(patch_feature_0, forest);
-		const unsigned key_1 = searchGPCForest<PatchColliderRGBCorrespondence::Parameters::feature_dim, NumTrees>(patch_feature_1, forest);
-
-		//Build the value
-		const unsigned value_0 = encode_pixel_impair(rgb_center_x, rgb_center_y, true);
-		const unsigned value_1 = encode_pixel_impair(rgb_center_x, rgb_center_y, false);
-
-		//Store it
-		const auto offset = 2 * (kv_x + kv_cols * kv_y);
-		keys[offset + 0] = key_0;
-		keys[offset + 1] = key_1;
-		values[offset + 0] = value_0;
-		values[offset + 1] = value_1;
-	}
-
-
-	template<int PatchHalfSize, int NumTrees>
-	__global__ void buildColliderKeyValueKernel(
 		cudaTextureObject_t new_rgb, bool swap,
 		const typename PatchColliderForest<PatchColliderRGBCorrespondence::Parameters::feature_dim, NumTrees>::GPCForestDevice forest,
 		const int stride, const int kv_rows, const int kv_cols,
+        const int keys_size, const int values_size,
 		unsigned* keys, unsigned* values
 	) {
 		const auto kv_x = threadIdx.x + blockDim.x * blockIdx.x;
@@ -125,6 +89,8 @@ namespace surfelwarp { namespace device {
 
 		//Store it
 		const auto offset = swap ? 2 * (kv_x + kv_cols * kv_y) : 2 * (kv_x + kv_cols * kv_y) + 1;
+        if (offset >= keys_size || offset >= values_size)
+            return;
 
 		keys[offset] = key;
 		values[offset] = value;
@@ -194,7 +160,6 @@ namespace surfelwarp { namespace device {
 		candidate_indicator[idx] = is_candidate;
 	}
 
-
 	__global__ void collectCandidatePixelPairKernel(
 		const PtrSz<const unsigned> candidate_indicator,
 		const unsigned* sorted_pixel_value,
@@ -205,7 +170,7 @@ namespace surfelwarp { namespace device {
 		const auto idx = threadIdx.x + blockDim.x * blockIdx.x;
 		if(idx >= candidate_indicator.size) return;
 
-		//For any valid indicator, it is safe to read its sucessor
+		//For any valid indicator, it is safe to read its successor
 		if(candidate_indicator[idx] > 0) {
 			ushort4 pixel_pair;
 			int x, y;
@@ -248,7 +213,8 @@ namespace surfelwarp { namespace device {
 surfelwarp::PatchColliderRGBCorrespondence::PatchColliderRGBCorrespondence()
 {
 	m_rgb_cols = m_rgb_rows = 0;
-	first_frame = true; swap = true;
+	first_frame = true;
+	swap = false;
 }
 
 void surfelwarp::PatchColliderRGBCorrespondence::AllocateBuffer(unsigned img_rows, unsigned img_cols)
@@ -325,22 +291,24 @@ void surfelwarp::PatchColliderRGBCorrespondence::FindCorrespondence(cudaStream_t
 	const auto forest_dev = m_forest.OnDevice();
 	if(first_frame)
         device::buildColliderKeyValueKernel<patch_radius, num_trees><<<kv_grid, kv_blk, 0, stream>>>(
-            rgb_0_, rgb_1_,
+            rgb_0_, true,
             forest_dev,
             patch_stride,
             m_kvmap_rows, m_kvmap_cols,
+            m_treeleaf_key.size(), m_pixel_value.size(),
             m_treeleaf_key.ptr(),
             m_pixel_value.ptr()
         );
-	else
-        device::buildColliderKeyValueKernel<patch_radius, num_trees><<<kv_grid, kv_blk, 0, stream>>>(
-                rgb_1_, swap,
-                forest_dev,
-                patch_stride,
-                m_kvmap_rows, m_kvmap_cols,
-                m_treeleaf_key.ptr(),
-                m_pixel_value.ptr()
-        );
+
+    device::buildColliderKeyValueKernel<patch_radius, num_trees><<<kv_grid, kv_blk, 0, stream>>>(
+            rgb_1_, swap,
+            forest_dev,
+            patch_stride,
+            m_kvmap_rows, m_kvmap_cols,
+            m_treeleaf_key.size(), m_pixel_value.size(),
+            m_treeleaf_key.ptr(),
+            m_pixel_value.ptr()
+    );
 	//Sort it
 	m_collide_sort.Sort(m_treeleaf_key, m_pixel_value, stream);
 

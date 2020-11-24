@@ -73,21 +73,20 @@ int main(int argc, char** argv) {
     //The processing loop
     SurfelWarpSerial fusion;
 
-    fusion.ProcessFirstFrame();
     for(auto i = config.start_frame_idx(); i < config.num_frames(); i++){
         if(config.frame_skip() > 1 && i % config.frame_skip())
             continue;
 //        LOG(INFO) << "The " << i << "th Frame";
         if(poses_path.empty())
         {
-            fusion.ProcessNextFrameWithReinit(offline_rendering);
+            fusion.Process();
         }
         else
         {
             fetcher->FetchDepthImage(i, m_depth_img);
             fetcher->FetchRGBImage(i, m_rgb_img);
             fusion.SetPose(poses[i]);
-            fusion.Process(&m_rgb_img, &m_depth_img);
+            fusion.Process(&m_rgb_img, &m_depth_img, false);
         }
     }
 
