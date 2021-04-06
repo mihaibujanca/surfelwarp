@@ -129,7 +129,6 @@ void surfelwarp::FusionRemainingSurfelMarker::UpdateRemainingSurfelIndicator(cud
 	marker.current_time = m_current_time;
 	marker.intrinsic = m_intrinsic;
 	
-//	dim3 blk(128);
 	dim3 blk(256);
 	dim3 grid(divUp(m_live_geometry.vertex_confid.Size(), blk.x));
 	device::markRemainingSurfelKernel<<<grid, blk, 0, stream>>>(marker);
