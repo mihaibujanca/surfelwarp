@@ -112,6 +112,16 @@ namespace surfelwarp {
         DeviceArray<float>& p,
         cudaStream_t stream = 0
     );
+    void block6x6_pcg_kernel_alphabeta(
+        const DeviceArray<float>& r,
+        const DeviceArray<float>& q,
+        const DeviceArray<float>& inv_diag_blks,
+        DeviceArray<float>& s,
+        DeviceArray<float>& x,
+        DeviceArray<float>& t,
+        DeviceArray<float>& p,
+        cudaStream_t stream = 0
+    );
 
 
 	/**

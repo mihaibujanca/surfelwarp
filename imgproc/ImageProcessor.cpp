@@ -53,6 +53,39 @@ surfelwarp::ImageProcessor::ImageProcessor(const surfelwarp::FetchInterface::Ptr
 	initProcessorStream();
 }
 
+surfelwarp::ImageProcessor::ImageProcessor() {
+	//Access the singleton
+	const auto& config = ConfigParser::Instance();
+
+	//Set the global constants
+	m_raw_img_rows = config.raw_image_rows();
+	m_raw_img_cols = config.raw_image_cols();
+	m_clip_img_rows = config.clip_image_rows();
+	m_clip_img_cols = config.clip_image_cols();
+	m_clip_near = config.clip_near_mm();
+	m_clip_far = config.clip_far_mm();
+
+	//The intrinsic parameters
+	m_raw_depth_intrinsic = config.depth_intrinsic_raw();
+	m_raw_rgb_intrinsic = config.rgb_intrinsic_raw();
+	m_clip_rgb_intrinsic = config.rgb_intrinsic_clip();
+	m_depth2rgb = config.depth2rgb_dev();
+
+	//Invoke the sub-init functions
+	allocateFetchBuffer();
+	allocateDepthTexture();
+	allocateRGBBuffer();
+	allocateGeometryTexture();
+	allocateColorTimeTexture();
+	allocateValidSurfelSelectionBuffer();
+	allocateForegroundSegmentationBuffer();
+	allocateFeatureCorrespondenceBuffer();
+	allocateGradientMap();
+
+	//Init the stream
+	initProcessorStream();
+}
+
 surfelwarp::ImageProcessor::~ImageProcessor()
 {
 	releaseFetchBuffer();

@@ -6,7 +6,6 @@ source_group("src" FILES ${CORE_SRC})
 source_group("render" FILES ${CORE_RENDER_SRC})
 source_group("geometry" FILES ${CORE_GEOMETRY_SRC})
 source_group("warp_solver" FILES ${CORE_SOLVER_SRC})
-
 #Add core library
 cuda_add_library(core_lib STATIC ${CORE_SRC} ${CORE_RENDER_SRC} ${CORE_GEOMETRY_SRC} ${CORE_SOLVER_SRC})
 #cuda_add_library(core_lib ${CORE_SRC} ${CORE_RENDER_SRC} ${CORE_GEOMETRY_SRC} ${CORE_SOLVER_SRC})

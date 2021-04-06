@@ -1,7 +1,7 @@
 {
     "clip_far":1300,
     "clip_near":10,
-    "data_prefix":"/home/mihai/Projects/slambench4/datasets/VolumeDeform/minion/data",
+    "data_prefix":"/home/mihai/Projects/slambench4/datasets/VolumeDeform/minion.dir/data",
     "depth_focal_x":570.0,"depth_focal_y":570.0,"depth_principal_x":320.0,"depth_principal_y":240.0,
     "gpc_model_path":"/home/mihai/Projects/surfelwarp/test_data/sintel_small_speed",
     "image_cols":640,"image_rows":480,

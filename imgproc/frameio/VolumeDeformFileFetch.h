@@ -13,6 +13,7 @@ namespace surfelwarp
 	class VolumeDeformFileFetch : public FetchInterface
 	{
 	public:
+	    enum IMG_TYPE{RGB, DEPTH, MASK, SEMANTIC};
 		using Ptr = std::shared_ptr<VolumeDeformFileFetch>;
 		using path = boost::filesystem::path;
 
@@ -29,6 +30,10 @@ namespace surfelwarp
 		void FetchDepthImage(size_t frame_idx, void* depth_img) override;
 		void FetchRGBImage(size_t frame_idx, cv::Mat& rgb_img) override;
 		void FetchRGBImage(size_t frame_idx, void* rgb_img) override;
+		void FetchMask(size_t frame_idx, cv::Mat& rgb_img);
+		void FetchMask(size_t frame_idx, void* rgb_img);
+		void FetchSemanticImage(size_t frame_idx, cv::Mat &semantic_img);
+		void FetchSemanticImage(size_t frame_idx, void *semantic_img);
 
 	private:
 		path m_data_path; //The path prefix for the data
@@ -36,5 +41,7 @@ namespace surfelwarp
 		//A series of naming functions
 		path FileNameVolumeDeform(size_t frame_idx, bool is_depth_img) const;
 		path FileNameSurfelWarp(size_t frame_idx, bool is_depth_img) const;
+		path FileNameVolumeDeform(size_t frame_idx, IMG_TYPE is_depth_img) const;
+		path FileNameSurfelWarp(size_t frame_idx, IMG_TYPE is_depth_img) const;
 	};
 }

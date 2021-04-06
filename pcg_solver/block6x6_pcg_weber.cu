@@ -119,7 +119,7 @@ namespace surfelwarp { namespace device {
 		if (lane_id == 31) warp_dot[warp_id] = scanned_dot;
 
 		//Perform reduct on the warp_dot
-//		__syncthreads(); MAYBE NEEDED
+//		__syncthreads();
 		if (warp_id == 0) {
 			float warp_dot_reduce = 0.0f;
 			if (lane_id < num_warps)
@@ -354,10 +354,6 @@ namespace surfelwarp { namespace device {
         }
 	}
 
-
-	
-
-
 	/**
 	 * \brief nu_new <- dot(t, p); beta <- nu_new/nu_old; s <- p + beta s
 	 */
@@ -395,12 +391,103 @@ namespace surfelwarp { namespace device {
 		}
 	}
 
+	/**
+	 * \brief nu_new <- dot(t, p); beta <- nu_new/nu_old; s <- p + beta s
+	 */
+    template<int num_warps = reduce_block_warps>
+	__global__ void block6x6PCGKernelAlphaBeta(
+            const PtrSz<const float> r,
+            const PtrSz<const float> q,
+            const PtrSz<const float> inv_diag_blks,
+            PtrSz<float> s,
+            PtrSz<float> x,
+            PtrSz<float> t,
+            PtrSz<float> p
+	) {
+        //Each block performs a reduction for alpha = dot(q, s)
+        __shared__ float alpha;
+        __shared__ float beta;
+        const int warp_id = threadIdx.x >> 5;
+        const int lane_id = threadIdx.x & 31;
 
+        float scanned_dot;
 
+        //Perform reduction on warp_0
+        if (warp_id == 0) {
+            scanned_dot = 0.0f;
+            if (lane_id < num_reduce_blocks_6x6) {
+                scanned_dot = reduce_partials_blk6x6[lane_id];
+            }
+            scanned_dot = warp_scan(scanned_dot);
+            if (lane_id == 31) {
+                alpha = nu_new_blk6x6 / scanned_dot;
+            }
+        }
 
-}; /* End of namespace device */ }; /* End of namespace surfelwarp */
+        //Do sync to broadcast alpha
+        __syncthreads();
+        const float alpha_thread = alpha;
 
+        const int idx = threadIdx.x + blockDim.x * blockIdx.x;
+        float dot_this_row = 0.0f;
+        if (idx < x.size) {
+            const int blk_idx = idx / 6;
 
+            //Block matrix vector product
+            float p_row = 0.0;
+            float mat_value, r_value;
+            for(auto j = 0; j < 6; j++) {
+                mat_value = inv_diag_blks[6 * idx + j];
+                r_value = r[6 * blk_idx + j] - alpha_thread * q[6 * blk_idx + j];
+                p_row += mat_value * r_value;
+            }
+            p[idx] = p_row; //p <- M_inv * r
+
+            const float r_row_new = r[idx] - alpha_thread * q[idx];
+            t[idx] = r_row_new; // t <- r - alpha * q
+            x[idx] += alpha_thread * s[idx]; // x <- x + alpha s
+            dot_this_row = p_row * r_row_new;
+        }
+
+        //Perform in block reduction on dot(q, s)
+        scanned_dot = dot_this_row;
+        scanned_dot = warp_scan(scanned_dot);
+
+        //Store the reduced warp_dot to shared memory for block scan
+        __shared__ float warp_dot[num_warps];
+        if (lane_id == 31) warp_dot[warp_id] = scanned_dot;
+
+        if (warp_id == 0) {
+            float warp_dot_reduce = 0.0f;
+            float dot_reduce = 0.0f;
+            if (lane_id < num_warps) {
+                warp_dot_reduce = warp_dot[lane_id];
+            }
+            if(lane_id < num_reduce_blocks_6x6) {
+                dot_reduce = reduce_partials_blk6x6[lane_id];
+            }
+            //Do warp scan again
+            warp_dot_reduce = warp_scan(warp_dot_reduce);
+            dot_reduce = warp_scan(dot_reduce);
+
+            //Store to global memory
+            if (lane_id == 31) {
+                reduce_partials_blk6x6[blockIdx.x] = warp_dot_reduce;
+                if(blockIdx.x == 0) nu_new_blk6x6 = dot_reduce;
+                beta = dot_reduce / nu_old_blk6x6;
+            }
+		}
+
+		//Do sync to broadcast the value of beta
+		__syncthreads();
+        const float beta_thread = beta;
+		if(idx < p.size) {
+			s[idx] = p[idx] + beta_thread * s[idx];
+		}
+    }
+
+}; /* End of namespace device */
+}; /* End of namespace surfelwarp */
 
 void surfelwarp::block6x6_pcg_weber(
 	const DeviceArray<float>& diag_blks, 
@@ -440,6 +527,7 @@ void surfelwarp::block6x6_pcg_weber(
     //The main loop
     for(auto i = 0; i < max_iters; i++) {
         block6x6_pcg_kernel_0(A_data, A_colptr, A_rowptr, s, q, stream);
+//        block6x6_pcg_kernel_alphabeta(r, q, inv_diag_blks,s, valid_x, t, p, stream);
         block6x6_pcg_kernel_1(s, r, q, inv_diag_blks, valid_x, t, p, stream);
         block6x6_pcg_kernel_2(p, s, stream);
         r.swap(t);
@@ -453,7 +541,7 @@ void surfelwarp::block6x6_pcg_weber(
 }
 
 
-
+// Ignore, only used in checks and debug
 void surfelwarp::block6x6_pcg_weber(
 	const DeviceArray<float>& diag_blks, 
 	const DeviceArray<float>& A_data, 
@@ -503,9 +591,6 @@ void surfelwarp::block6x6_pcg_weber(
 #endif
 }
 
-
-
-
 void surfelwarp::block6x6_diag_inverse(const float * A, float * A_inversed, int num_matrix, cudaStream_t stream)
 {
 	const int threads_per_blk = 64;
@@ -545,7 +630,6 @@ void surfelwarp::block6x6_init_kernel(
 	cudaSafeCall(cudaGetLastError());
 #endif
 }
-
 
 /* nu_old <- nu_new; q <- A s; alpha <- nu_old / dot(q, s); */
 void surfelwarp::block6x6_pcg_kernel_0(
@@ -587,7 +671,6 @@ void surfelwarp::block6x6_pcg_kernel_0(
 #endif
 }
 
-
 /* alpha <- nu_new / dot(q, s); x <- x + alpha * s;
  * t <- r - alpha * q; p <- M_inv*t; nu_new <- dot(t, p) */
 void surfelwarp::block6x6_pcg_kernel_1(
@@ -605,6 +688,23 @@ void surfelwarp::block6x6_pcg_kernel_1(
     device::block6x6PCGKernel_1<<<grid, blk, 0, stream>>>(s, r, q, inv_diag_blks, x, t, p);
 }
 
+/* alpha <- nu_new / dot(q, s); x <- x + alpha * s;
+ * t <- r - alpha * q; p <- M_inv*t; nu_new <- dot(t, p) */
+void surfelwarp::block6x6_pcg_kernel_alphabeta(
+        const DeviceArray<float>& r,
+        const DeviceArray<float>& q,
+        const DeviceArray<float>& inv_diag_blks,
+        DeviceArray<float>& s,
+        DeviceArray<float>& x,
+        DeviceArray<float>& t,
+        DeviceArray<float>& p,
+        cudaStream_t stream
+) {
+    dim3 blk(reduce_block_threads);
+    dim3 grid(divUp(s.size(), blk.x));
+    // dim3 grid(num_reduce_blocks_6x6);
+    device::block6x6PCGKernelAlphaBeta<<<grid, blk, 0, stream>>>(r, q, inv_diag_blks, s, x, t, p);
+}
 
 void surfelwarp::block6x6_pcg_kernel_2(
 	const DeviceArray<float>& p,
@@ -616,10 +716,7 @@ void surfelwarp::block6x6_pcg_kernel_2(
     device::block6x6PCGKernel_2<<<grid, blk, 0, stream>>>(p, s);
 }
 
-
-/*
- * Below are the checking subroutines defined for 6x6 pcg solver
- */
+/** Below are the checking subroutines defined for 6x6 pcg solver */
 void surfelwarp::checkBlock6x6Init(
         const std::vector<float> &b,
         const std::vector<float> &inv_diags,
@@ -680,7 +777,6 @@ void surfelwarp::checkBlock6x6Init(
     checkBlock6x6Init(b, inv_diags, r, s);
 }
 
-
 void surfelwarp::checkBlock6x6Kernel_0(
         const std::vector<float> &A_data,
         const std::vector<int> &A_rowptr,
@@ -738,8 +834,6 @@ void surfelwarp::checkBlock6x6Kernel_0(
     assert(std::abs((h_dot - dev_dot) / dev_dot) < 1e-4);
 }
 
-
-
 void surfelwarp::checkBlock6x6Kernel_1(
         const std::vector<float> &s,
         const std::vector<float> &r,
@@ -782,19 +876,22 @@ void surfelwarp::checkBlock6x6Kernel_1(
 	float nu_old_host, nu_new_host;
 	cudaMemcpyFromSymbol(&nu_old_host, device::nu_old_blk6x6, sizeof(float), 0, cudaMemcpyDeviceToHost);
 	cudaMemcpyFromSymbol(&nu_new_host, device::nu_new_blk6x6, sizeof(float), 0, cudaMemcpyDeviceToHost);
-	cudaSafeCall(cudaDeviceSynchronize());
-	assert(std::abs(nu_new_host - nu_old_host) < 1e-7);
+#if defined(CUDA_DEBUG_SYNC_CHECK)
+    cudaSafeCall(cudaDeviceSynchronize());
+    cudaSafeCall(cudaGetLastError());
+#endif
+    assert(std::abs(nu_new_host - nu_old_host) < 1e-7);
 	const float alpha = nu_old_host / dot_s_q;
 
 	//The value of alpha is correct
 	//std::cout << "Alpha from host " << alpha << std::endl;
 
 	//Invoke the device version function
-	cudaSafeCall(cudaDeviceSynchronize());
 	block6x6_pcg_kernel_1(s_dev, r_dev, q_dev, inv_diag_blks_dev, x_dev, t_dev, p_dev);
-	cudaSafeCall(cudaDeviceSynchronize());
-	cudaSafeCall(cudaGetLastError());
-
+#if defined(CUDA_DEBUG_SYNC_CHECK)
+    cudaSafeCall(cudaDeviceSynchronize());
+    cudaSafeCall(cudaGetLastError());
+#endif
 	//Check x <- x + alpha * s
 	for (auto i = 0; i < x.size(); i++) {
 		x[i] += alpha * s[i];
@@ -855,7 +952,6 @@ void surfelwarp::checkBlock6x6Kernel_1(
 	assert(std::abs((dev_dot - dot_t_p) / dot_t_p) < 1e-4);
 }
 
-
 void surfelwarp::checkBlock6x6Kernel_2(
         const std::vector<float> &p,
         std::vector<float> &s
@@ -909,6 +1005,3 @@ void surfelwarp::checkBlock6x6Kernel_2(
         std::cout << "Max relative error in s <- p + beta s " << relative_err << std::endl;
     }
 }
-
-
-

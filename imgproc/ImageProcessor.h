@@ -31,6 +31,7 @@ namespace surfelwarp {
 
 		//Constructor allocate the buffer, while de-constructor release them
 		explicit ImageProcessor(const FetchInterface::Ptr& fetcher);
+		explicit ImageProcessor();
 		~ImageProcessor();
 		SURFELWARP_NO_COPY_ASSIGN_MOVE(ImageProcessor);
 
@@ -261,7 +262,6 @@ namespace surfelwarp {
 		cudaStream_t m_processor_stream[3];
 		void initProcessorStream();
 		void releaseProcessorStream();
-		void syncAllProcessorStream();
 	public:
 		void ProcessFrameStreamed(CameraObservation& observation,
                                   size_t frame_idx,

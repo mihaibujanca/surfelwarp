@@ -120,13 +120,13 @@ namespace surfelwarp { namespace device {
 					shared_warp_tmp[warp_id] = data;
 				}
 
-				__syncthreads();
+//				__syncthreads(); NEED TO CHECK RESULT
 				data = threadIdx.x < num_warps ? shared_warp_tmp[threadIdx.x] : 0.0f;
 				data = warp_scan(data);
 				if(threadIdx.x == warpSize - 1) {
 					reduced_blks[i] += data;
 				}
-//				__syncthreads();
+				__syncthreads();
 			}
 		}
 

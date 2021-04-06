@@ -13,6 +13,9 @@
 #ifndef boundary_clip
 #define boundary_clip 20
 #endif
+//#ifndef boundary_clip
+//#define boundary_clip 0
+//#endif
 
 
 //For pcl access of new in debug mode

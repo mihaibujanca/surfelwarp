@@ -14,7 +14,8 @@
 surfelwarp::ForegroundSegmenterOffline::ForegroundSegmenterOffline() {
 	//Check the directory
 	const auto& config = ConfigParser::Instance();
-	m_mask_dir = config.data_path() / "mask";
+//	m_mask_dir = config.data_path() / "mask";
+	m_mask_dir = config.data_path();
 	SURFELWARP_CHECK(boost::filesystem::exists(m_mask_dir));
 	
 	//Correct the size of the image

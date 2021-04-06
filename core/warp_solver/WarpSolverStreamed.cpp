@@ -34,10 +34,9 @@ void surfelwarp::WarpSolver::syncAllSolverStream() {
 }
 
 void surfelwarp::WarpSolver::SolveStreamed() {
-	//Sync before computation
-	//  syncAllSolverStream();  // No need
 	//Actual computation
 	buildSolverIndexStreamed();
+//	Modifying kNumGaussNewtonIterations has a big impact on computation!
 	for(auto i = 0; i < Constants::kNumGaussNewtonIterations; i++) {
         solverIterationStreamed(m_iteration_data.IsGlobalIteration());
 	}
@@ -78,7 +77,8 @@ void surfelwarp::WarpSolver::buildSolverIndexStreamed() {
 	SetNode2TermIndexInput();
 	BuildNode2TermIndex(m_solver_stream[0]); //This doesnt block
 	BuildNodePair2TermIndexBlocked(m_solver_stream[1]); //This will block
-//	cudaSafeCall(cudaStreamSynchronize(m_solver_stream[0]));
+
+	cudaSafeCall(cudaStreamSynchronize(m_solver_stream[0])); //TODO: remove
 }
 
 void surfelwarp::WarpSolver::solverIterationStreamed(bool global) {
@@ -89,15 +89,15 @@ void surfelwarp::WarpSolver::solverIterationStreamed(bool global) {
 
 	//The computation of jacobian
 	ComputeTermJacobianIndex(m_solver_stream[0], m_solver_stream[1], m_solver_stream[2], m_solver_stream[3], true); // A sync should happen here
-//    syncAllSolverStream();
+    // Stream 1 and 3 are outputs
 	cudaSafeCall(cudaStreamSynchronize(m_solver_stream[1]));
-    cudaSafeCall(cudaStreamSynchronize(m_solver_stream[3]));
+    cudaSafeCall(cudaStreamSynchronize(m_solver_stream[3])); // Produces non-crashing error if removed
 
 	//The computation of diagonal blks JtJ and JtError
 	SetPreconditionerBuilderAndJtJApplierInput();
 	SetJtJMaterializerInput();
     BuildPreconditioner(m_solver_stream[0]);
-	if(global) {
+    if(global) {
         ComputeJtResidualGlobalIteration(m_solver_stream[1]);
         MaterializeJtJNondiagonalBlocksGlobalIteration(m_solver_stream[2]);
     }
@@ -116,7 +116,7 @@ void surfelwarp::WarpSolver::solverIterationStreamed(bool global) {
 	//LOG(INFO) << "The total squared residual in materialized, fixed-index solver is " << ComputeTotalResidualSynced(m_solver_stream[0]);
 
 	//Solve it and update
-	SolvePCGMaterialized();
+	SolvePCGMaterialized(Constants::kNumPCGMaterializedSolverIterations); // 10 by default. amounts for about 10% of the computation
 	m_iteration_data.ApplyWarpFieldUpdate(m_solver_stream[0]);
 	cudaSafeCall(cudaStreamSynchronize(m_solver_stream[0]));
 }

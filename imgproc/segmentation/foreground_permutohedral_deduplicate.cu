@@ -38,9 +38,6 @@ namespace surfelwarp { namespace device {
 			}
 		}
 
-		//Sync here
-//		__syncthreads();// MAYBE NEEDED
-
 		//Shared lattice for cooperative loading
 		__shared__ LatticeCoordKey<image_permutohedral_dim> lattice[num_threads];
 
@@ -85,9 +82,9 @@ namespace surfelwarp { namespace device {
 					}
 				} //End of checking loop
 			}
-            __syncthreads();
-
+//            __syncthreads(); maybe needed
         }
+        __syncthreads();
 
 
 		//End of checking loop
@@ -159,11 +156,12 @@ namespace surfelwarp { namespace device {
 					index_offset += scanned_matched;
 				}
 			}
-            __syncthreads();
+//            __syncthreads(); MAYBE NEEDED
 
 			//Store the result
 			lattice_record.lattice_coord_offset[lattice_idx].y = begin + index_offset;
 		}
+        __syncthreads();
 
 		//Copy the local reduce buffer back to sorted buffer
 		for(auto i = begin; i < end; i += num_threads) {

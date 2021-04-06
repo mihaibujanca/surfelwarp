@@ -57,8 +57,18 @@ namespace surfelwarp {
 		int frame_skip() const;
 		bool solve_rigid() const;
 
+		/* Frame skipping
+		 */
+	private:
+		bool m_offline_save;
+		void setDefaultOfflineSave();
+		void saveOfflineSaveToJson(void* json_ptr) const;
+		void loadOfflineSaveFromJson(const void* json_ptr);
+	public:
+		bool offline_save() const;
+
 		
-		//The frame peroids for reinit and recent
+    //The frame periods for reinit and recent
 	private:
 		bool m_use_periodic_reinit;
 		int m_reinit_period;
@@ -87,7 +97,7 @@ namespace surfelwarp {
 		unsigned clip_image_cols() const { return m_clip_image_cols; }
 		
 		
-		/* The method and member about cliping
+		/* The method and member about clipping
 		 */
 	private:
 		unsigned m_clip_near;

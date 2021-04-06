@@ -20,6 +20,8 @@ void surfelwarp::ConfigParser::setDefaultParameters() {
 	setDefaultCameraIntrinsic();
 	setDefaultPenaltyConfigs();
     setDefaultFrameSkip();
+    setDefaultOfflineSave();
+    setDefaultSolveRigid();
 }
 
 /* Public interface
@@ -42,9 +44,8 @@ void surfelwarp::ConfigParser::ParseConfig(const std::string & config_path) {
 	loadPenaltyConfigFromJson((const void*)&config_json);
 	loadFrameSkipFromJson((const void*)&config_json);
     loadSolveRigidFromJson((const void*)&config_json);
+    loadOfflineSaveFromJson((const void*)&config_json);
 
-//        if(input_file.is_open())
-//            input_file.close();
 }
 
 void surfelwarp::ConfigParser::SaveConfig(const std::string & config_path) const {
@@ -231,6 +232,38 @@ void surfelwarp::ConfigParser::loadSolveRigidFromJson(const void * json_ptr) {
 
 bool surfelwarp::ConfigParser::solve_rigid() const {
     return m_solve_rigid;
+}
+
+// Offline saving
+void surfelwarp::ConfigParser::setDefaultOfflineSave() {
+    m_offline_save = false;
+}
+
+void surfelwarp::ConfigParser::saveOfflineSaveToJson(void * json_ptr) const {
+    //Recovery the json type
+    using json = nlohmann::json;
+    auto& config_json = *((json*)json_ptr);
+
+    //Save it
+    config_json["offline_save"] = m_offline_save;
+}
+
+void surfelwarp::ConfigParser::loadOfflineSaveFromJson(const void * json_ptr) {
+    //Recovery the json type
+    using json = nlohmann::json;
+    const auto& config_json = *((const json*)json_ptr);
+
+    //Load it, these parameter are not required
+    //but implemented as required for debug
+    SURFELWARP_CHECK(config_json.find("offline_save") != config_json.end());
+
+    //load it
+    m_offline_save = config_json["offline_save"];
+}
+
+
+bool surfelwarp::ConfigParser::offline_save() const {
+    return m_offline_save;
 }
 
 //The method about peroids

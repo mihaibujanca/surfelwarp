@@ -235,8 +235,8 @@ void surfelwarp::SparseCorrespondenceHandler::QueryCompactedArraySize(cudaStream
 	));
 	
 	//Sync before use
-	cudaSafeCall(cudaStreamSynchronize(stream));
-	
+    cudaSafeCall(cudaStreamSynchronize(stream));
+
 	//LOG(INFO) << "The number of valid pixel pairs is " << valid_array_size;
 	
 	//Correct the size

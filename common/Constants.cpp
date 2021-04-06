@@ -41,7 +41,8 @@ const int surfelwarp::Constants::kStableSurfelConfidenceThreshold = 10;
 //Use elastic penalty or not
 const bool surfelwarp::Constants::kUseElasticPenalty = true;
 const int surfelwarp::Constants::kNumGlobalSolverItarations = 3;
-const int surfelwarp::Constants::kNumGaussNewtonIterations = 6;
+const int surfelwarp::Constants::kNumGaussNewtonIterations = 4; // Computationally expensive! Default: 6
+const int surfelwarp::Constants::kNumPCGMaterializedSolverIterations = 5; // default 10
 
 //The iteration used by segmenter
 const int surfelwarp::Constants::kMeanfieldSegmentIteration = 3;

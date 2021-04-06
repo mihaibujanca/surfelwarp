@@ -4,6 +4,12 @@ project(surfelwarp)
 
 # Add cmake module path
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+if(${SLAMBENCH_AVAILABLE})
+    message("Building SurfelWarp with PIC enabled")
+    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler=-fPIC")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+endif()
 
 # Language options
 set(CMAKE_CXX_STANDARD 17)
@@ -14,7 +20,7 @@ set(VISUALIZATION_LIBRARY "cilantro")
 find_package(CUDA 9 REQUIRED)
 set(CUDA_PROPAGATE_HOST_FLAGS OFF)
 include_directories(${CUDA_INCLUDE_DIRS})
-set(CUDA_ARCH "75" CACHE STRING "Architecture(s) for which to generate CUDA PTX code")
+set(CUDA_ARCH "72" CACHE STRING "Architecture(s) for which to generate CUDA PTX code")
 if(CUDA_VERSION_MAJOR LESS 10)
     set_property(CACHE CUDA_ARCH PROPERTY STRINGS "50 through 61" "50" "60" "61")
 else()
@@ -68,18 +74,11 @@ if(MSVC)
 endif(MSVC)
 # The library and compiler flags on Ubuntu
 if(UNIX)
-#    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -O3 --profile --generate-line-info --use_fast_math -std=c++17")
-    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -O3 --use_fast_math -std=c++17 -Xptxas -O3 -Xcompiler=-O3")
-#    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -g -G -std=c++17 -Xptxas -g -Xcompiler=-g")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast -std=c++17") # Ofast here
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Ofast")
+    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -O3 --use_fast_math -std=c++14 -Xptxas -O3 -Xcompiler=-O3")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++17") # Ofast here
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
 endif(UNIX)
 
-#if(${SLAMBENCH_AVAILABLE})
-#    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler=-fPIC")
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
-#    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
-#endif()
 # Append "d" to library versions with debugging symbols
 set(CMAKE_DEBUG_POSTFIX d)
 

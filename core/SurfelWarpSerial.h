@@ -71,13 +71,12 @@ namespace surfelwarp {
 		//Process the first frame
 		void ProcessFirstFrame(const cv::Mat* rgb = nullptr, const cv::Mat* depth = nullptr);
 		void ProcessNextFrameNoReinit();
-                void Process(const cv::Mat* rgb = nullptr,
-                            const cv::Mat* depth = nullptr,
-                            bool compute_pose = true,
-                            bool offline_save = false);
-                cv::Mat getLiveModelFrame();
-                void SetPose(const Eigen::Matrix4f& pose);
-                Eigen::Matrix4f GetPose();
+        void Process(const cv::Mat* rgb = nullptr,
+                    const cv::Mat* depth = nullptr,
+                    bool compute_pose = true);
+        cv::Mat getLiveModelFrame();
+        void SetPose(const Eigen::Matrix4f& pose);
+        Eigen::Matrix4f GetPose();
         //void ProcessNextFrameLegacySolver();
 		
 		//The testing methods
@@ -86,12 +85,13 @@ namespace surfelwarp {
 		void TestSolverWithRigidTransform();
 		void TestRigidSolver();
 		void TestPerformance();
-		
-		
-		/* The method to save the informaiton for offline visualization/debug
-		 * Assume the geometry pipeline can be called directly.
-		 * These methods should be disabled on Real-Time code
-		 */
+        void GetModel(std::vector<float4> &cloud);
+
+
+        /* The method to save the informaiton for offline visualization/debug
+         * Assume the geometry pipeline can be called directly.
+         * These methods should be disabled on Real-Time code
+         */
 	private:
 		//The camera observation
 		void saveCameraObservations(const CameraObservation& observation, const boost::filesystem::path& save_dir);
@@ -101,7 +101,7 @@ namespace surfelwarp {
 		
 		//Save the coorresponded geometry and obsertion
 		void saveCorrespondedCloud(const CameraObservation& observation, unsigned vao_idx, const boost::filesystem::path& save_dir);
-		
+
 		
 		//The rendered and shaded geometry, This method requires access to OpenGL pipeline
 		void saveVisualizationMaps(
