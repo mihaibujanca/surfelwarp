@@ -55,7 +55,8 @@ namespace surfelwarp {
 		const static bool kUseElasticPenalty;
 		const static int kNumGlobalSolverItarations;
 		const static int kNumGaussNewtonIterations;
-		
+		const static int kNumPCGMaterializedSolverIterations;
+
 		//The number of iterations used by segmenter
 		const static int kMeanfieldSegmentIteration;
 	};

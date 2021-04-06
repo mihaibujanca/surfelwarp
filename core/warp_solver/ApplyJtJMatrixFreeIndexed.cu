@@ -318,7 +318,7 @@ namespace surfelwarp { namespace device {
                     if(threadIdx.x == warpSize - 1) {
                         reduced_blks[i] += data;
                     }
-                    __syncthreads();
+//                    __syncthreads();
                 }
             } // iterate over terms
 

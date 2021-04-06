@@ -52,10 +52,6 @@ int main(int argc, char** argv) {
     //The context
     //auto context = initCudaContext();
 
-    //Save offline
-//	bool offline_rendering = true;
-    bool offline_rendering = false;
-
     std::vector<surfelwarp::Matrix4f> poses;
     if(!poses_path.empty()){
         poses = readMatrix(poses_path, config.num_frames());
@@ -66,7 +62,8 @@ int main(int argc, char** argv) {
     std::cout<<config.data_path()<<std::endl;
 
     cv::Mat m_depth_img, m_rgb_img;
-    m_depth_img = cv::Mat(cv::Size(config.raw_image_cols(), config.raw_image_rows()), CV_16UC1);
+//    m_depth_img = cv::Mat(cv::Size(config.raw_image_cols(), config.raw_image_rows()), CV_16UC1);
+    m_depth_img = cv::Mat(cv::Size(config.raw_image_cols(), config.raw_image_rows()), CV_16FC1);
     m_rgb_img = cv::Mat(cv::Size(config.raw_image_cols(), config.raw_image_rows()), CV_8UC4);
 
 
@@ -76,10 +73,10 @@ int main(int argc, char** argv) {
     for(auto i = config.start_frame_idx(); i < config.num_frames(); i++){
         if(config.frame_skip() > 1 && i % config.frame_skip())
             continue;
-//        LOG(INFO) << "The " << i << "th Frame";
+
         if(poses_path.empty())
         {
-            fusion.Process();
+            fusion.Process(nullptr, nullptr, true);
         }
         else
         {

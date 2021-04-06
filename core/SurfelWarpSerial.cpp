@@ -19,8 +19,9 @@ surfelwarp::SurfelWarpSerial::SurfelWarpSerial() {
     const auto& config = ConfigParser::Instance();
 
     //Construct the image processor
-    FetchInterface::Ptr fetcher = std::make_shared<GenericFileFetch>(config.data_path());
-    m_image_processor = std::make_shared<ImageProcessor>(fetcher);
+//    FetchInterface::Ptr fetcher = std::make_shared<GenericFileFetch>(config.data_path());
+//    m_image_processor = std::make_shared<ImageProcessor>(fetcher);
+    m_image_processor = std::make_shared<ImageProcessor>();
 
     //Construct the holder for surfel geometry
     m_surfel_geometry[0] = std::make_shared<SurfelGeometry>();
@@ -100,7 +101,7 @@ void surfelwarp::SurfelWarpSerial::ProcessFirstFrame(const cv::Mat* rgb, const c
     m_frame_idx++;
 }
 
-void surfelwarp::SurfelWarpSerial::Process(const cv::Mat* rgb, const cv::Mat* depth, bool compute_pose, bool offline_save) {
+void surfelwarp::SurfelWarpSerial::Process(const cv::Mat* rgb, const cv::Mat* depth, bool compute_pose) {
     if(m_frame_idx == ConfigParser::Instance().start_frame_idx()) {
         ProcessFirstFrame(rgb, depth);
     }
@@ -202,10 +203,10 @@ void surfelwarp::SurfelWarpSerial::Process(const cv::Mat* rgb, const cv::Mat* de
             );
 
             //Process it
-            const auto node_error = m_warp_solver->GetNodeAlignmentError();
+//            const auto node_error = m_warp_solver->GetNodeAlignmentError();
+            //m_geometry_reinit_processor->ProcessReinitNodeErrorSerial(num_remaining_surfel, num_appended_surfel, node_error, 0.06f);
             unsigned num_remaining_surfel, num_appended_surfel;
             m_geometry_reinit_processor->ProcessReinitObservedOnlySerial(num_remaining_surfel, num_appended_surfel);
-            //m_geometry_reinit_processor->ProcessReinitNodeErrorSerial(num_remaining_surfel, num_appended_surfel, node_error, 0.06f);
 
             //Reinit the warp field
             const auto reference_vertex = m_surfel_geometry[fused_geometry_idx]->GetReferenceVertexConfidence();
@@ -222,7 +223,8 @@ void surfelwarp::SurfelWarpSerial::Process(const cv::Mat* rgb, const cv::Mat* de
             auto skinner_geometry = m_surfel_geometry[fused_geometry_idx]->SkinnerAccess();
             auto skinner_warpfield = m_warp_field->SkinnerAccess();
             m_reference_knn_skinner->PerformSkinning(skinner_geometry, skinner_warpfield);
-        } else if(do_integrate) {
+        } else
+            if(do_integrate) {
             //Update the frame idx
             fused_geometry_idx = (m_updated_geometry_index + 1) % 2;
 
@@ -273,7 +275,7 @@ void surfelwarp::SurfelWarpSerial::Process(const cv::Mat* rgb, const cv::Mat* de
         m_renderer->UnmapSurfelGeometryFromCuda(1);
 
         //Debug save
-        if(offline_save) {
+        if(ConfigParser::Instance().offline_save()) {
             const auto with_recent = draw_recent || use_reinit;
             const auto& save_dir = createOrGetDataDirectory(m_frame_idx);
             saveCameraObservations(observation, save_dir);
@@ -298,6 +300,11 @@ void surfelwarp::SurfelWarpSerial::SetPose(const Eigen::Matrix4f& pose) {
 
 Eigen::Matrix4f surfelwarp::SurfelWarpSerial::GetPose() {
     return m_camera.GetWorld2CameraEigen();
+}
+
+void surfelwarp::SurfelWarpSerial::GetModel(std::vector<float4> &cloud) {
+    DeviceArray<float4> point_cloud((float4 *) m_surfel_geometry[m_updated_geometry_index]->Geometry().live_vertex_confid.RawPtr(), m_surfel_geometry[m_updated_geometry_index]->NumValidSurfels());
+    point_cloud.download(cloud);
 }
 
 /* The method for offline visualization
@@ -395,7 +402,9 @@ cv::Mat surfelwarp::SurfelWarpSerial::getLiveModelFrame() {
 
 boost::filesystem::path surfelwarp::SurfelWarpSerial::createOrGetDataDirectory(int frame_idx) {
     //Construct the path
-    boost::filesystem::path result_folder("frame_" + std::to_string(frame_idx));
+    char frame_idx_str[20];
+    sprintf(frame_idx_str, "%06d", frame_idx);
+    boost::filesystem::path result_folder("frame_" + std::string(frame_idx_str));
     if(!boost::filesystem::exists(result_folder)) {
         boost::filesystem::create_directory(result_folder);
     }

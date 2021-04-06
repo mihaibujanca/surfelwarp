@@ -370,7 +370,6 @@ void surfelwarp::Visualizer::DrawMatchedCloudPair(
 #endif
 }
 
-
 void surfelwarp::Visualizer::DrawMatchedCloudPair(
         const PointCloud3f_Pointer &cloud_1,
         const PointCloud3f_Pointer &cloud_2,
@@ -594,7 +593,6 @@ void surfelwarp::Visualizer::DrawAppendedSurfelCloud(
     DrawMatchedCloudPair(h_surfels, h_append_surfels, world2camera);
 }
 
-
 void surfelwarp::Visualizer::DrawAppendedSurfelCloud(
         DeviceArrayView<float4> surfel_vertex,
         cudaTextureObject_t depth_vertex_map,
@@ -605,17 +603,3 @@ void surfelwarp::Visualizer::DrawAppendedSurfelCloud(
     auto h_append_surfels = downloadPointCloud(depth_vertex_map, append_pixel);
     DrawMatchedCloudPair(h_surfels, h_append_surfels, world2camera);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -47,48 +47,54 @@ namespace surfelwarp { namespace device {
 			const float4 surfel_vertex_confid = live_geometry.vertex_confid[idx];
 			const float4 surfel_normal_radius = live_geometry.normal_radius[idx];
 			const float4 surfel_color_time = live_geometry.color_time[idx];
-			//Transfer to camera space
-			const float3 vertex = world2camera.rot * surfel_vertex_confid + world2camera.trans;
 
-			//Project to camera image
-			const int x = __float2int_rn(((vertex.x / (vertex.z + 1e-10)) * intrinsic.focal_x) + intrinsic.principal_x);
-			const int y = __float2int_rn(((vertex.y / (vertex.z + 1e-10)) * intrinsic.focal_y) + intrinsic.principal_y);
+            //The global counter
+            unsigned keep_indicator = 1;
 
-			//The corrdinate on ***_map
-			const int map_x_center = scale_factor * x; // +windows_halfsize;
-			const int map_y_center = scale_factor * y; // +windows_halfsize;
 			int front_counter = 0;
-
 			//Window search
-			for(auto map_y = map_y_center - window_halfsize; map_y < map_y_center + window_halfsize; map_y++) {
-				for(auto map_x = map_x_center - window_halfsize; map_x < map_x_center + window_halfsize; map_x++) {
-					const float4 map_vertex_confid = tex2D<float4>(fusion_maps.vertex_confid_map, map_x, map_y);
-					const float4 map_normal_radius = tex2D<float4>(fusion_maps.normal_radius_map, map_x, map_y);
-					const auto index = tex2D<unsigned>(fusion_maps.index_map, map_x, map_y);
-					if(index != 0xFFFFFFFF)
-					{
-						const auto dot_value =dotxyz(surfel_normal_radius, map_normal_radius);
-						const float3 diff_camera = world2camera.rot * (surfel_vertex_confid - map_vertex_confid);
-						if(diff_camera.z >= 0 && diff_camera.z <= 3 * 0.001 && dot_value >= 0.8) {
-							front_counter++;
-						}
-					}
-				}
-			}
+            //Check the initialize time
+            if(surfel_vertex_confid.w < 10.0f && (current_time - initialization_time(surfel_color_time)) > 30.0f)
+                keep_indicator = 0;
+            else
+            {
+                //Transfer to camera space
+                const float3 vertex = world2camera.rot * surfel_vertex_confid + world2camera.trans;
 
-			//The global counter
-			unsigned keep_indicator = 1;
+                //Project to camera image
+                const int x = __float2int_rn(((vertex.x / (vertex.z + 1e-10)) * intrinsic.focal_x) + intrinsic.principal_x);
+                const int y = __float2int_rn(((vertex.y / (vertex.z + 1e-10)) * intrinsic.focal_y) + intrinsic.principal_y);
 
-			//Check the number of front surfels
-			if(front_counter > front_threshold) keep_indicator = 0;
+                //The corrdinate on ***_map
+                const int map_x_center = scale_factor * x; // +windows_halfsize;
+                const int map_y_center = scale_factor * y; // +windows_halfsize;
+                const int limit_x = map_x_center + window_halfsize;
+                const int limit_y = map_y_center + window_halfsize;
+                // TODO: this can be parallelized
+                for(auto map_y = map_y_center - window_halfsize; map_y < limit_y; map_y++) {
+                    for(auto map_x = map_x_center - window_halfsize; map_x < limit_x; map_x++) {
+                        const auto index = tex2D<unsigned>(fusion_maps.index_map, map_x, map_y);
+                        if(index != 0xFFFFFFFF)
+                        {
+                            const float4 map_vertex_confid = tex2D<float4>(fusion_maps.vertex_confid_map, map_x, map_y);
+                            const float4 map_normal_radius = tex2D<float4>(fusion_maps.normal_radius_map, map_x, map_y);
 
-			//Check the initialize time
-			if(surfel_vertex_confid.w < 10.0f && (current_time - initialization_time(surfel_color_time)) > 30.0f) keep_indicator = 0;
+                            const auto dot_value = dotxyz(surfel_normal_radius, map_normal_radius);
+                            const float3 diff_camera = world2camera.rot * (surfel_vertex_confid - map_vertex_confid);
+                            if(diff_camera.z >= 0 && diff_camera.z <= 3 * 0.001 && dot_value >= 0.8) {
+                                front_counter++;
+                            }
+                        }
+                    }
+                }
+                //Check the number of front surfels
+                if(front_counter > front_threshold)
+                    keep_indicator = 0;
+            }
 
 			//Write to output
-			if(keep_indicator == 1 && remaining_surfel[idx] == 0) {
+			if(keep_indicator == 1 && remaining_surfel[idx] == 0)
 				remaining_surfel[idx] = 1;
-			}
 		}
 		
 	};
@@ -123,6 +129,7 @@ void surfelwarp::FusionRemainingSurfelMarker::UpdateRemainingSurfelIndicator(cud
 	marker.current_time = m_current_time;
 	marker.intrinsic = m_intrinsic;
 	
+//	dim3 blk(128);
 	dim3 blk(256);
 	dim3 grid(divUp(m_live_geometry.vertex_confid.Size(), blk.x));
 	device::markRemainingSurfelKernel<<<grid, blk, 0, stream>>>(marker);

@@ -193,7 +193,6 @@ namespace surfelwarp { namespace device {
                 }
 
                 //Do a reduction to reduced_men
-//			__syncthreads();
                 for (int i = 0; i < jt_dot_blk_size; i++) {
                     float data = (iter < term_size && term_valid) ? shared_blks[i][threadIdx.x] : 0.0f;
                     data = warp_scan(data);
@@ -210,9 +209,7 @@ namespace surfelwarp { namespace device {
                     //Sync again?
 //				__syncthreads();
                 }
-//        __syncthreads();
             }
-//        __syncthreads();
 
             //All the terms that contribute to this value is done, store to global memory
             if(threadIdx.x < jt_dot_blk_size) jt_residual[jt_dot_blk_size * node_idx + threadIdx.x] = reduced_blks[threadIdx.x];

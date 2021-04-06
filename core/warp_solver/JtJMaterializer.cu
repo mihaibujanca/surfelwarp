@@ -364,7 +364,7 @@ namespace surfelwarp { namespace device {
             for(auto iter = threadIdx.x; iter < jtj_blk_size; iter += warp_size)
                 reduced_blks[iter] = 0.0f;
 
-#pragma unroll
+///// #pragma unroll
             for (auto iter = threadIdx.x; iter < padded_term_size; iter += warp_size)
             {
                 //The global term index

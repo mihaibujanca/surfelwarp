@@ -222,7 +222,7 @@ void surfelwarp::LiveGeometryUpdater::ProcessFusionStreamed(unsigned &num_remain
 	FuseCameraObservationSync(m_fusion_stream[0]);
 //	cudaSafeCall(cudaStreamSynchronize(m_fusion_stream[0]));
 //	cudaSafeCall(cudaStreamSynchronize(m_fusion_stream[1]));
-	
+
 	//These two parallel
 	ProcessAppendedSurfels(m_fusion_stream[1]);
 	MarkRemainingSurfels(m_fusion_stream[0]);

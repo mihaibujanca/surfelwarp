@@ -10,8 +10,11 @@
 
 //Clip pixels at boundary for better windowed search. 
 //Please refer to clip.md under imgproc directory for details
+//#ifndef boundary_clip
+//#define boundary_clip 20
+//#endif
 #ifndef boundary_clip
-#define boundary_clip 20
+#define boundary_clip 0
 #endif
 
 
