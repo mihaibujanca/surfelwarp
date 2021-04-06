@@ -40,9 +40,7 @@ void surfelwarp::SurfelGeometry::ResizeValidSurfelArrays(size_t size)
 	m_num_valid_surfels = size;
 }
 
-
-/* The access interface
- */
+/* The access interface */
 surfelwarp::SurfelGeometry::SolverInput surfelwarp::SurfelGeometry::SolverAccess() const {
 	SolverInput solver_input;
 	solver_input.surfel_knn = m_surfel_knn.ArrayReadOnly();
@@ -56,7 +54,6 @@ surfelwarp::SurfelGeometry::LegacySolverInput surfelwarp::SurfelGeometry::Legacy
 	solver_input.surfel_knn_weight = DeviceArray<float4>(m_surfel_knn_weight.Ptr(), m_surfel_knn_weight.ArraySize());
 	return solver_input;
 }
-
 
 surfelwarp::SurfelGeometry::SurfelFusionInput surfelwarp::SurfelGeometry::SurfelFusionAccess() {
 	SurfelFusionInput fusion_input;
