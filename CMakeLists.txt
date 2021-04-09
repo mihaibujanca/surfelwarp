@@ -75,8 +75,8 @@ endif(MSVC)
 # The library and compiler flags on Ubuntu
 if(UNIX)
     set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -O3 --use_fast_math -std=c++14 -Xptxas -O3 -Xcompiler=-O3")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-terminate -O3 -std=c++17") # Ofast here
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-terminate -O3")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++17") # Ofast here
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
 endif(UNIX)
 
 # Append "d" to library versions with debugging symbols
