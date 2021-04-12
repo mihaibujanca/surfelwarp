@@ -124,7 +124,7 @@ if(${CUDA_VERSION_MAJOR} LESS 11)
 endif()
 
 # OpenCV lib: this version uses the customized build
-find_package(OpenCV REQUIRED)
+find_package(OpenCV REQUIRED COMPONENTS core imgproc imgcodecs)
 include_directories(${OpenCV_INCLUDE_DIR})
 
 # The boost library is contained in pcl

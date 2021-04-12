@@ -352,24 +352,20 @@ void surfelwarp::GLOfflineVisualizationFrameRenderBufferObjects::save(const std:
 	cv::imwrite(path, rendered_map_cv);
 }
 
-cv::Mat surfelwarp::GLOfflineVisualizationFrameRenderBufferObjects::toOpenCV() {
+void surfelwarp::GLOfflineVisualizationFrameRenderBufferObjects::toOpenCV(cv::Mat &rendered_map_cv) {
 	//Bind the render buffer object
 	glBindRenderbuffer(GL_RENDERBUFFER, normalized_rgba_rbo);
 
 	//First query the size of render buffer object
-	GLint width, height;
-	glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &width);
-	glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &height);
+//	glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &rendered_map_cv.cols);
+//	glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &rendered_map_cv.rows);
 
 	//Construct the storage
-        cv::Mat rendered_map_cv(height, width, CV_8UC4);
 	glBindFramebuffer(GL_FRAMEBUFFER, visualization_map_fbo);
-	glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, rendered_map_cv.data);
+	glReadPixels(0, 0, rendered_map_cv.cols, rendered_map_cv.rows, GL_RGBA, GL_UNSIGNED_BYTE, rendered_map_cv.data);
 
 	//Cleanup code
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
-	//Save it
-	return rendered_map_cv;
 }

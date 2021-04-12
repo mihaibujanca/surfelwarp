@@ -99,6 +99,6 @@ namespace surfelwarp {
 		//Save it as opencv images.
 		//Of course, this method should never be used in real-time code
 		void save(const std::string& path);
-		cv::Mat toOpenCV();
+		void toOpenCV(cv::Mat &rendered_map_cv);
 	};
 }

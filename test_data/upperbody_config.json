@@ -15,5 +15,5 @@
     "use_offline_foreground":false,
     "frame_skip": 0,
     "solve_rigid": true,
-    "offline_save": true
+    "offline_save": false
 }

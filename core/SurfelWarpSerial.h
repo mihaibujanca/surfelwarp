@@ -74,7 +74,7 @@ namespace surfelwarp {
         void Process(const cv::Mat* rgb = nullptr,
                     const cv::Mat* depth = nullptr,
                     bool compute_pose = true);
-        cv::Mat getLiveModelFrame();
+        void getLiveModelFrame(cv::Mat& live_frame);
         void SetPose(const Eigen::Matrix4f& pose);
         Eigen::Matrix4f GetPose();
         //void ProcessNextFrameLegacySolver();

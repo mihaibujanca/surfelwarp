@@ -144,7 +144,7 @@ namespace surfelwarp {
 		void SaveReferenceNormalMap(unsigned num_vertex, int vao_idx, int current_time, const Matrix4f& world2camera, const std::string& path, bool with_recent = true);
 		void SaveReferenceAlbedoMap(unsigned num_vertex, int vao_idx, int current_time, const Matrix4f& world2camera, const std::string& path, bool with_recent = true);
 		void SaveReferencePhongMap(unsigned num_vertex, int vao_idx, int current_time, const Matrix4f& world2camera, const std::string& path, bool with_recent = true);
-                cv::Mat OpenCVAlbedoMap(unsigned num_vertex, int vao_idx, int current_time, const surfelwarp::Matrix4f &world2camera, bool with_recent = true);
+        void OpenCVAlbedoMap(cv::Mat& albedo_map, unsigned num_vertex, int vao_idx, int current_time, const surfelwarp::Matrix4f &world2camera, bool with_recent = true);
         //Debug drawing functions
 		void DebugFusionMapsDraw(unsigned num_vertex, int vao_idx);
 		void DebugSolverMapsDraw(unsigned num_vertex, int vao_idx);

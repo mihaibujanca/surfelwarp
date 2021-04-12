@@ -266,7 +266,8 @@ void surfelwarp::Renderer::SaveLiveAlbedoMap(
 	m_visualization_draw_buffers.save(path);
 }
 
-cv::Mat surfelwarp::Renderer::OpenCVAlbedoMap(
+void surfelwarp::Renderer::OpenCVAlbedoMap(
+    cv::Mat& albedo_map, // output
 	unsigned num_vertex,
 	int vao_idx,
 	int current_time,
@@ -283,7 +284,8 @@ cv::Mat surfelwarp::Renderer::OpenCVAlbedoMap(
 		with_recent
 	);
 
-	return m_visualization_draw_buffers.toOpenCV();
+    // Draw on the returned object
+	m_visualization_draw_buffers.toOpenCV(albedo_map);
 }
 
 

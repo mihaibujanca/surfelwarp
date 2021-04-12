@@ -395,9 +395,9 @@ void surfelwarp::SurfelWarpSerial::saveVisualizationMaps(
     m_renderer->SaveReferencePhongMap (num_vertex, vao_idx, m_frame_idx, init_world2camera, (save_dir /  "reference_phong.png").string(), with_recent);
 }
 
-cv::Mat surfelwarp::SurfelWarpSerial::getLiveModelFrame() {
+void surfelwarp::SurfelWarpSerial::getLiveModelFrame(cv::Mat& live_frame) {
     auto num_vertex = m_surfel_geometry[m_updated_geometry_index]->NumValidSurfels();
-    return m_renderer->OpenCVAlbedoMap(num_vertex, m_updated_geometry_index, m_frame_idx, m_camera.GetWorld2CameraEigen());
+    return m_renderer->OpenCVAlbedoMap(live_frame, num_vertex, m_updated_geometry_index, m_frame_idx, m_camera.GetWorld2CameraEigen());
 }
 
 boost::filesystem::path surfelwarp::SurfelWarpSerial::createOrGetDataDirectory(int frame_idx) {
