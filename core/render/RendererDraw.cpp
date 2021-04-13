@@ -288,7 +288,6 @@ void surfelwarp::Renderer::OpenCVAlbedoMap(
 	m_visualization_draw_buffers.toOpenCV(albedo_map);
 }
 
-
 void surfelwarp::Renderer::SaveLivePhongMap(
 	unsigned num_vertex,
 	int vao_idx,

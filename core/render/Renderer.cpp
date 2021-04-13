@@ -139,12 +139,3 @@ void surfelwarp::Renderer::MapSolverMapsToCuda(surfelwarp::Renderer::SolverMaps 
 void surfelwarp::Renderer::UnmapSolverMapsFromCuda(cudaStream_t stream) {
 	m_solver_map_buffers.unmapFromCuda(stream);
 }
-
-
-
-
-
-
-
-
-

@@ -397,7 +397,7 @@ void surfelwarp::SurfelWarpSerial::saveVisualizationMaps(
 
 void surfelwarp::SurfelWarpSerial::getLiveModelFrame(cv::Mat& live_frame) {
     auto num_vertex = m_surfel_geometry[m_updated_geometry_index]->NumValidSurfels();
-    return m_renderer->OpenCVAlbedoMap(live_frame, num_vertex, m_updated_geometry_index, m_frame_idx, m_camera.GetWorld2CameraEigen());
+    m_renderer->OpenCVAlbedoMap(live_frame, num_vertex, m_updated_geometry_index, m_frame_idx, m_camera.GetWorld2CameraEigen());
 }
 
 boost::filesystem::path surfelwarp::SurfelWarpSerial::createOrGetDataDirectory(int frame_idx) {
