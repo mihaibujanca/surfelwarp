@@ -4,7 +4,8 @@ project(surfelwarp)
 
 # Add cmake module path
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-if(${SLAMBENCH_AVAILABLE})
+# FIXME: find better solution to fPIC when building for SLAMBench or python bindings
+if("DEFINED SLAMBENCH_AVAILABLE" OR "${BUILD_PYTHON_BINDINGS}")
     message("Building SurfelWarp with PIC enabled")
     set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler=-fPIC")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")

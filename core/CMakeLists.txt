@@ -20,7 +20,6 @@ target_link_libraries(core_lib solver_lib)
 #Link the graphic lib
 target_link_libraries(core_lib glfw)
 target_compile_definitions(core_lib PUBLIC CUB_USE_COOPERATIVE_GROUPS)
-#set_target_properties(core_lib PROPERTIES COMPILE_FLAGS "-fPIC")
 
 if(WIN32)
     #In MSVC, alignments must be extendable for Eigen vectorizations
