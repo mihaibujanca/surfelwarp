@@ -136,8 +136,6 @@ void surfelwarp::SurfelWarpSerial::Process(const cv::Mat* rgb, const cv::Mat* de
             m_rigid_solver->SetInputMaps(solver_maps, observation, m_camera.GetWorld2Camera());
             const mat34 solved_world2camera = m_rigid_solver->Solve();
             m_camera.SetWorld2Camera(solved_world2camera);
-            Eigen::IOFormat CommaInitFmt(Eigen::StreamPrecision, Eigen::DontAlignCols, " ", " ", "", "", "", "");
-            std::cout << m_camera.GetWorld2CameraEigen().format(CommaInitFmt) << std::endl;
         }
 
         //The resource from geometry attributes
@@ -291,8 +289,8 @@ void surfelwarp::SurfelWarpSerial::Process(const cv::Mat* rgb, const cv::Mat* de
 
         //Update the index
         m_updated_geometry_index = fused_geometry_idx;
+        m_frame_idx++;
     }
-    m_frame_idx++;
 }
 void surfelwarp::SurfelWarpSerial::SetPose(const Eigen::Matrix4f& pose) {
     m_camera.SetWorld2Camera(pose);
