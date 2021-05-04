@@ -298,6 +298,4 @@ namespace surfelwarp {
 		void fullSolverIterationMaterializedLazyEvaluateSerial(cudaStream_t stream = 0);
 		void materializedLazyEvaluateSolverIterationSerial(cudaStream_t stream = 0);
 	};
-	
-	
 }

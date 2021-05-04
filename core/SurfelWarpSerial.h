@@ -76,7 +76,7 @@ namespace surfelwarp {
                     bool compute_pose = true);
         void getLiveModelFrame(cv::Mat& live_frame);
         void SetPose(const Eigen::Matrix4f& pose);
-        Eigen::Matrix4f GetPose();
+        const Eigen::Matrix4f& GetPose() const;
         //void ProcessNextFrameLegacySolver();
 		
 		//The testing methods
@@ -121,5 +121,4 @@ namespace surfelwarp {
 		bool shouldDoReinit() const;
 		bool shouldDrawRecentObservation() const;
 	};
-	
 }

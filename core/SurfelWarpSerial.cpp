@@ -14,7 +14,7 @@
 #include <thread>
 #include <fstream>
 
-surfelwarp::SurfelWarpSerial::SurfelWarpSerial() {
+surfelwarp::SurfelWarpSerial::SurfelWarpSerial() : m_camera(Camera()) {
     //The config is assumed to be updated
     const auto& config = ConfigParser::Instance();
 
@@ -296,8 +296,9 @@ void surfelwarp::SurfelWarpSerial::SetPose(const Eigen::Matrix4f& pose) {
     m_camera.SetWorld2Camera(pose);
 }
 
-Eigen::Matrix4f surfelwarp::SurfelWarpSerial::GetPose() {
-    return m_camera.GetWorld2CameraEigen();
+const Eigen::Matrix4f& surfelwarp::SurfelWarpSerial::GetPose() const {
+//    return m_camera.GetWorld2CameraEigen();
+    return m_camera.GetInitWorld2CameraEigen();
 }
 
 void surfelwarp::SurfelWarpSerial::GetModel(std::vector<float4> &cloud) {

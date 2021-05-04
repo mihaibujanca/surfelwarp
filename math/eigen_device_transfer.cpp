@@ -36,7 +36,6 @@ Eigen::Matrix4f surfelwarp::toEigen(const mat34 &rhs) {
     return lhs;
 }
 
-
 Eigen::Vector3f surfelwarp::toEigen(const float3 &rhs) {
     Vector3f lhs;
     lhs(0) = rhs.x;

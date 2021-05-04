@@ -534,7 +534,3 @@ void surfelwarp::WarpSolver::releaseResidualEvaluatorBuffer() {
 float surfelwarp::WarpSolver::ComputeTotalResidualSynced(cudaStream_t stream) {
 	return m_residual_evaluator->ComputeTotalResidualSynced(stream);
 }
-
-
-
-

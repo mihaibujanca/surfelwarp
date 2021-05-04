@@ -12,6 +12,7 @@ namespace surfelwarp {
     //Transfer the device vector/matrix to Eigen
     Matrix3f toEigen(const mat33 &rhs);
 
+//    Matrix4f toEigen(const mat34 &rhs);
     Matrix4f toEigen(const mat34 &rhs);
 
     Vector3f toEigen(const float3 &rhs);
